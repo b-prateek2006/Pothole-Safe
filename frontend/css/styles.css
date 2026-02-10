@@ -1,0 +1,85 @@
+:root {
+  --primary: #2563eb;
+  --success: #16a34a;
+  --danger: #dc2626;
+  --warning: #facc15;
+  --bg: #f8fafc;
+  --text: #0f172a;
+  --muted: #64748b;
+}
+
+* {
+  box-sizing: border-box;
+  font-family: "Inter", system-ui, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+}
+
+nav {
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 40px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+nav .logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+}
+
+nav a {
+  text-decoration: none;
+  color: var(--muted);
+  margin-left: 20px;
+}
+
+nav a:hover {
+  color: var(--primary);
+}
+
+.container {
+  max-width: 1100px;
+  margin: 40px auto;
+  padding: 20px;
+}
+
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+}
+
+.btn {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.btn.secondary {
+  background: #e5e7eb;
+  color: var(--text);
+}
+
+.btn.success {
+  background: var(--success);
+}
+
+.btn.danger {
+  background: var(--danger);
+}
+
+.center {
+  text-align: center;
+}
