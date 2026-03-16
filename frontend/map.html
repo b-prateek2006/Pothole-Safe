@@ -3,23 +3,36 @@
 <head>
   <title>Pothole Map</title>
   <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
 </head>
 <body>
 
 <nav>
   <div class="logo">
-    <img src="assets/logo.svg" />
+    <img src="assets/logo.svg" alt="PotholeSafe" />
     PotholeSafe
+  </div>
+  <div>
+    <a href="index.html">Home</a>
+    <a href="report.html">Report</a>
+    <a href="map.html">Map</a>
+    <a href="admin.html">Admin</a>
   </div>
 </nav>
 
 <div class="container">
   <div class="card">
     <h2>Pothole Map</h2>
-    <img src="https://maps.googleapis.com/maps/api/staticmap?center=12.97,77.59&zoom=13&size=800x400"
-         style="width:100%;border-radius:8px">
+    <p class="muted" id="map-status">Loading map...</p>
+    <div id="map" style="height: 500px; border-radius: 8px; margin-top: 15px;"></div>
   </div>
 </div>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script src="js/main.js"></script>
+<script src="js/map.js"></script>
 </body>
 </html>

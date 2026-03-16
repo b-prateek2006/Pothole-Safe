@@ -8,26 +8,99 @@
 
 <nav>
   <div class="logo">
-    <img src="assets/logo.svg" />
-    PotholeSafe Admin
+    <img src="assets/logo.svg" alt="PotholeSafe" />
+    PotholeSafe
+  </div>
+  <div>
+    <a href="index.html">Home</a>
+    <a href="report.html">Report</a>
+    <a href="map.html">Map</a>
+    <a href="admin.html">Admin</a>
   </div>
 </nav>
 
-<div class="container">
-  <div class="card">
-    <h2>Reports</h2>
-
-    <p>123 Main St</p>
-    <button class="btn success">Verify</button>
-    <button class="btn danger">Reject</button>
-
-    <hr><br>
-
-    <p>456 Oak Ave</p>
-    <button class="btn success">Verify</button>
-    <button class="btn danger">Reject</button>
+<!-- Login Section -->
+<div class="container" id="login-section">
+  <div class="card center" style="max-width: 400px; margin: 80px auto;">
+    <h2>Admin Login</h2>
+    <br>
+    <form id="login-form">
+      <input type="text" id="username" placeholder="Username" required>
+      <br><br>
+      <input type="password" id="password" placeholder="Password" required>
+      <br><br>
+      <button type="submit" class="btn" style="width:100%;">Login</button>
+      <p id="login-error" class="error-message" style="display:none;"></p>
+    </form>
   </div>
 </div>
 
+<!-- Dashboard Section (hidden until login) -->
+<div class="container" id="dashboard-section" style="display:none;">
+  <div style="display: flex; justify-content: space-between; align-items: center;">
+    <h2>Admin Dashboard</h2>
+    <button class="btn danger" onclick="adminLogout()">Logout</button>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <p class="stat-number" id="stat-total">0</p>
+      <p class="stat-label">Total Reports</p>
+    </div>
+    <div class="stat-card stat-pending">
+      <p class="stat-number" id="stat-pending">0</p>
+      <p class="stat-label">Pending</p>
+    </div>
+    <div class="stat-card stat-verified">
+      <p class="stat-number" id="stat-verified">0</p>
+      <p class="stat-label">Verified</p>
+    </div>
+    <div class="stat-card stat-rejected">
+      <p class="stat-number" id="stat-rejected">0</p>
+      <p class="stat-label">Rejected</p>
+    </div>
+  </div>
+
+  <br>
+
+  <div class="card">
+    <div class="table-header">
+      <h3>Reports</h3>
+      <div class="filter-group">
+        <label>Filter:</label>
+        <select id="status-filter">
+          <option value="ALL">All</option>
+          <option value="PENDING">Pending</option>
+          <option value="VERIFIED">Verified</option>
+          <option value="REJECTED">Rejected</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="reports-loading" class="loading">
+      <div class="spinner"></div>
+      <p>Loading reports...</p>
+    </div>
+
+    <table id="reports-table" class="reports-table" style="display:none;">
+      <thead>
+        <tr>
+          <th>Image</th>
+          <th>Location</th>
+          <th>Date</th>
+          <th>Confidence</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="reports-body"></tbody>
+    </table>
+
+    <p id="no-reports" class="muted center" style="display:none;">No reports found.</p>
+  </div>
+</div>
+
+<script src="js/main.js"></script>
+<script src="js/admin.js"></script>
 </body>
 </html>

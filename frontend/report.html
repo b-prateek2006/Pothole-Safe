@@ -8,8 +8,14 @@
 
 <nav>
   <div class="logo">
-    <img src="assets/logo.svg" />
+    <img src="assets/logo.svg" alt="PotholeSafe" />
     PotholeSafe
+  </div>
+  <div>
+    <a href="index.html">Home</a>
+    <a href="report.html">Report</a>
+    <a href="map.html">Map</a>
+    <a href="admin.html">Admin</a>
   </div>
 </nav>
 
@@ -17,17 +23,48 @@
   <div class="card">
     <h2>Report a Pothole</h2>
 
-    <label>Upload Photo</label><br><br>
-    <input type="file"><br><br>
+    <form id="report-form">
+      <label for="photo">Upload Photo</label>
+      <div id="drop-zone" class="drop-zone">
+        <p>Click or drag an image here</p>
+        <input type="file" id="photo" accept="image/*" hidden>
+      </div>
+      <div id="preview-container" class="preview-container" style="display:none;">
+        <img id="image-preview" alt="Preview">
+        <button type="button" id="remove-image" class="btn danger btn-sm">Remove</button>
+      </div>
 
-    <label>Location</label><br><br>
-    <input type="text" value="Auto-detected location" disabled style="width:100%;padding:10px">
+      <br>
+      <label>Location</label>
+      <div class="location-group">
+        <div class="location-inputs">
+          <input type="number" id="latitude" placeholder="Latitude" step="any" required>
+          <input type="number" id="longitude" placeholder="Longitude" step="any" required>
+        </div>
+        <button type="button" id="detect-location" class="btn secondary">Detect My Location</button>
+      </div>
+      <p id="location-status" class="muted"></p>
 
-    <br><br>
-    <button class="btn">Submit Report</button>
-    <button class="btn secondary">Cancel</button>
+      <br>
+      <label for="description">Description (optional)</label>
+      <textarea id="description" placeholder="Describe the pothole..." rows="3"></textarea>
+
+      <br><br>
+      <div class="form-actions">
+        <button type="submit" class="btn" id="submit-btn">Submit Report</button>
+        <a href="index.html"><button type="button" class="btn secondary">Cancel</button></a>
+      </div>
+
+      <div id="form-error" class="error-message" style="display:none;"></div>
+      <div id="form-loading" class="loading" style="display:none;">
+        <div class="spinner"></div>
+        <p>Submitting and verifying your report...</p>
+      </div>
+    </form>
   </div>
 </div>
 
+<script src="js/main.js"></script>
+<script src="js/report.js"></script>
 </body>
 </html>

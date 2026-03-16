@@ -1,25 +1,68 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Status</title>
+  <title>Report Status</title>
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
 
 <nav>
   <div class="logo">
-    <img src="assets/logo.svg" />
+    <img src="assets/logo.svg" alt="PotholeSafe" />
     PotholeSafe
+  </div>
+  <div>
+    <a href="index.html">Home</a>
+    <a href="report.html">Report</a>
+    <a href="map.html">Map</a>
+    <a href="admin.html">Admin</a>
   </div>
 </nav>
 
-<div class="container center">
-  <div class="card">
-    <h2>Pending Verification</h2>
-    <p>Your report has been submitted successfully.</p>
-    <button class="btn">View My Reports</button>
+<div class="container">
+  <div class="card center" id="status-card">
+    <div id="status-loading" class="loading">
+      <div class="spinner"></div>
+      <p>Loading report status...</p>
+    </div>
+
+    <div id="status-content" style="display:none;">
+      <div id="status-icon" class="status-icon"></div>
+      <h2 id="status-title"></h2>
+      <p id="status-message" class="muted"></p>
+      <br>
+      <div id="report-details">
+        <img id="report-image" alt="Pothole" class="status-image" style="display:none;">
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span class="detail-label">Location</span>
+            <span id="detail-location" class="detail-value"></span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Confidence</span>
+            <span id="detail-confidence" class="detail-value"></span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Submitted</span>
+            <span id="detail-date" class="detail-value"></span>
+          </div>
+        </div>
+      </div>
+      <br>
+      <a href="report.html"><button class="btn">Report Another</button></a>
+      <a href="map.html"><button class="btn secondary">View Map</button></a>
+    </div>
+
+    <div id="status-error" style="display:none;">
+      <h2>Report Not Found</h2>
+      <p class="muted">The report you're looking for doesn't exist.</p>
+      <br>
+      <a href="report.html"><button class="btn">Submit a Report</button></a>
+    </div>
   </div>
 </div>
 
+<script src="js/main.js"></script>
+<script src="js/status.js"></script>
 </body>
 </html>
