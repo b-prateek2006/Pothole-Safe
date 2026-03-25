@@ -1,7 +1,10 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pothole Map</title>
+  <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
   <link rel="stylesheet" href="css/styles.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
@@ -17,18 +20,56 @@
   <div>
     <a href="index.html">Home</a>
     <a href="report.html">Report</a>
-    <a href="map.html">Map</a>
+    <a href="map.html" class="active">Map</a>
+    <a href="status.html">Status</a>
     <a href="admin.html">Admin</a>
   </div>
 </nav>
 
 <div class="container">
   <div class="card">
-    <h2>Pothole Map</h2>
-    <p class="muted" id="map-status">Loading map...</p>
-    <div id="map" style="height: 500px; border-radius: 8px; margin-top: 15px;"></div>
+    <div class="map-header">
+      <div>
+        <h2>Pothole Map</h2>
+        <p class="muted" id="map-status">Loading map...</p>
+      </div>
+      <div class="map-filters">
+        <button class="filter-btn active" data-filter="VERIFIED">Verified</button>
+        <button class="filter-btn" data-filter="PENDING">Pending</button>
+        <button class="filter-btn" data-filter="REJECTED">Rejected</button>
+        <button class="filter-btn" data-filter="ALL">All</button>
+      </div>
+    </div>
+    <div class="map-container">
+      <div id="map" style="height: 500px; border-radius: 8px;"></div>
+      <div class="map-legend">
+        <h4>Legend</h4>
+        <div class="legend-item">
+          <span class="legend-marker verified"></span> Verified
+        </div>
+        <div class="legend-item">
+          <span class="legend-marker pending"></span> Pending
+        </div>
+        <div class="legend-item">
+          <span class="legend-marker rejected"></span> Rejected
+        </div>
+      </div>
+    </div>
   </div>
 </div>
+
+<footer>
+  <div class="footer-content">
+    <div class="footer-links">
+      <a href="index.html">Home</a>
+      <a href="report.html">Report</a>
+      <a href="map.html">Map</a>
+      <a href="status.html">Status</a>
+      <a href="admin.html">Admin</a>
+    </div>
+    <p class="footer-copyright">PotholeSafe - A College Project for Civic Infrastructure</p>
+  </div>
+</footer>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>

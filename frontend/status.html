@@ -1,7 +1,10 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Report Status</title>
+  <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -15,6 +18,7 @@
     <a href="index.html">Home</a>
     <a href="report.html">Report</a>
     <a href="map.html">Map</a>
+    <a href="status.html" class="active">Status</a>
     <a href="admin.html">Admin</a>
   </div>
 </nav>
@@ -27,12 +31,40 @@
     </div>
 
     <div id="status-content" style="display:none;">
+      <!-- Progress Tracker -->
+      <div class="progress-tracker">
+        <div class="progress-step completed" data-step="submitted">
+          <div class="progress-icon">&#10003;</div>
+          <div class="progress-label">Submitted</div>
+        </div>
+        <div class="progress-line"></div>
+        <div class="progress-step" data-step="verifying">
+          <div class="progress-icon">&#128269;</div>
+          <div class="progress-label">Verifying</div>
+        </div>
+        <div class="progress-line"></div>
+        <div class="progress-step" data-step="result">
+          <div class="progress-icon" id="result-icon">?</div>
+          <div class="progress-label" id="result-label">Result</div>
+        </div>
+      </div>
+
       <div id="status-icon" class="status-icon"></div>
       <h2 id="status-title"></h2>
       <p id="status-message" class="muted"></p>
       <br>
       <div id="report-details">
         <img id="report-image" alt="Pothole" class="status-image" style="display:none;">
+
+        <!-- Confidence Gauge -->
+        <div id="confidence-gauge" class="confidence-gauge" style="display:none;">
+          <div class="gauge-label">AI Confidence</div>
+          <div class="gauge-bar">
+            <div class="gauge-fill" id="gauge-fill"></div>
+          </div>
+          <div class="gauge-value" id="gauge-value">0%</div>
+        </div>
+
         <div class="detail-grid">
           <div class="detail-item">
             <span class="detail-label">Location</span>
@@ -49,18 +81,40 @@
         </div>
       </div>
       <br>
-      <a href="report.html"><button class="btn">Report Another</button></a>
-      <a href="map.html"><button class="btn secondary">View Map</button></a>
+      <div class="status-actions">
+        <a href="report.html" class="btn">Report Another</a>
+        <a href="map.html" class="btn secondary">View Map</a>
+        <button class="btn secondary" id="copy-link-btn" onclick="copyStatusLink()">Copy Link</button>
+      </div>
+      <p id="copy-success" class="success-message" style="display:none;">Link copied to clipboard!</p>
     </div>
 
     <div id="status-error" style="display:none;">
       <h2>Report Not Found</h2>
-      <p class="muted">The report you're looking for doesn't exist.</p>
+      <p class="muted">The report you're looking for doesn't exist or the ID is invalid.</p>
       <br>
-      <a href="report.html"><button class="btn">Submit a Report</button></a>
+      <div class="track-inline">
+        <input type="number" id="status-track-id" placeholder="Enter Report ID" min="1">
+        <button class="btn" onclick="goToReport()">Track</button>
+      </div>
+      <br>
+      <a href="report.html" class="btn secondary">Submit a New Report</a>
     </div>
   </div>
 </div>
+
+<footer>
+  <div class="footer-content">
+    <div class="footer-links">
+      <a href="index.html">Home</a>
+      <a href="report.html">Report</a>
+      <a href="map.html">Map</a>
+      <a href="status.html">Status</a>
+      <a href="admin.html">Admin</a>
+    </div>
+    <p class="footer-copyright">PotholeSafe - A College Project for Civic Infrastructure</p>
+  </div>
+</footer>
 
 <script src="js/main.js"></script>
 <script src="js/status.js"></script>

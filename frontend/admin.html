@@ -1,8 +1,12 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Dashboard</title>
+  <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
   <link rel="stylesheet" href="css/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
@@ -15,7 +19,8 @@
     <a href="index.html">Home</a>
     <a href="report.html">Report</a>
     <a href="map.html">Map</a>
-    <a href="admin.html">Admin</a>
+    <a href="status.html">Status</a>
+    <a href="admin.html" class="active">Admin</a>
   </div>
 </nav>
 
@@ -25,9 +30,11 @@
     <h2>Admin Login</h2>
     <br>
     <form id="login-form">
-      <input type="text" id="username" placeholder="Username" required>
+      <label for="username" class="sr-only">Username</label>
+      <input type="text" id="username" placeholder="Username" required aria-label="Username">
       <br><br>
-      <input type="password" id="password" placeholder="Password" required>
+      <label for="password" class="sr-only">Password</label>
+      <input type="password" id="password" placeholder="Password" required aria-label="Password">
       <br><br>
       <button type="submit" class="btn" style="width:100%;">Login</button>
       <p id="login-error" class="error-message" style="display:none;"></p>
@@ -61,19 +68,40 @@
     </div>
   </div>
 
+  <!-- Chart Section -->
+  <div class="dashboard-grid">
+    <div class="chart-card">
+      <h3>Reports Overview</h3>
+      <div class="chart-container">
+        <canvas id="status-chart"></canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <h3>Quick Actions</h3>
+      <div class="quick-actions">
+        <button class="btn secondary" onclick="document.getElementById('status-filter').value='PENDING'; document.getElementById('status-filter').dispatchEvent(new Event('change'));">Review Pending</button>
+        <button class="btn secondary" onclick="exportCSV()">Export All Data</button>
+        <a href="map.html" class="btn secondary">View Map</a>
+      </div>
+    </div>
+  </div>
+
   <br>
 
   <div class="card">
     <div class="table-header">
       <h3>Reports</h3>
-      <div class="filter-group">
-        <label>Filter:</label>
-        <select id="status-filter">
-          <option value="ALL">All</option>
-          <option value="PENDING">Pending</option>
-          <option value="VERIFIED">Verified</option>
-          <option value="REJECTED">Rejected</option>
-        </select>
+      <div style="display: flex; gap: 12px; align-items: center;">
+        <button class="btn secondary btn-sm" onclick="exportCSV()">Export CSV</button>
+        <div class="filter-group">
+          <label>Filter:</label>
+          <select id="status-filter">
+            <option value="ALL">All</option>
+            <option value="PENDING">Pending</option>
+            <option value="VERIFIED">Verified</option>
+            <option value="REJECTED">Rejected</option>
+          </select>
+        </div>
       </div>
     </div>
 
@@ -97,8 +125,28 @@
     </table>
 
     <p id="no-reports" class="muted center" style="display:none;">No reports found.</p>
+
+    <!-- Pagination -->
+    <div id="pagination" class="pagination" style="display:none;">
+      <button class="btn secondary btn-sm" id="prev-page" onclick="goToPage(-1)">Previous</button>
+      <span id="page-info" class="page-info">Page 1 of 1</span>
+      <button class="btn secondary btn-sm" id="next-page" onclick="goToPage(1)">Next</button>
+    </div>
   </div>
 </div>
+
+<footer>
+  <div class="footer-content">
+    <div class="footer-links">
+      <a href="index.html">Home</a>
+      <a href="report.html">Report</a>
+      <a href="map.html">Map</a>
+      <a href="status.html">Status</a>
+      <a href="admin.html">Admin</a>
+    </div>
+    <p class="footer-copyright">PotholeSafe - A College Project for Civic Infrastructure</p>
+  </div>
+</footer>
 
 <script src="js/main.js"></script>
 <script src="js/admin.js"></script>

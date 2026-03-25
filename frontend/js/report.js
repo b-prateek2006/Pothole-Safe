@@ -13,7 +13,27 @@ document.addEventListener('DOMContentLoaded', () => {
   const formLoading = document.getElementById('form-loading');
   const submitBtn = document.getElementById('submit-btn');
 
+  // Stepper elements
+  const steps = document.querySelectorAll('.step');
+
   let selectedFile = null;
+
+  // Update stepper state based on form completion
+  function updateStepper() {
+    const hasPhoto = selectedFile !== null;
+    const hasLocation = latInput.value && lngInput.value;
+
+    // Step 1: Photo
+    steps[0].classList.toggle('completed', hasPhoto);
+    steps[0].classList.toggle('active', !hasPhoto);
+
+    // Step 2: Location
+    steps[1].classList.toggle('completed', hasLocation);
+    steps[1].classList.toggle('active', hasPhoto && !hasLocation);
+
+    // Step 3: Submit
+    steps[2].classList.toggle('active', hasPhoto && hasLocation);
+  }
 
   // Drop zone click opens file picker
   dropZone.addEventListener('click', () => photoInput.click());
@@ -58,6 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
       imagePreview.src = e.target.result;
       dropZone.style.display = 'none';
       previewContainer.style.display = 'block';
+      updateStepper();
     };
     reader.readAsDataURL(file);
     hideError();
@@ -70,7 +91,12 @@ document.addEventListener('DOMContentLoaded', () => {
     imagePreview.src = '';
     previewContainer.style.display = 'none';
     dropZone.style.display = 'flex';
+    updateStepper();
   });
+
+  // Location input changes
+  latInput.addEventListener('input', updateStepper);
+  lngInput.addEventListener('input', updateStepper);
 
   // Detect location
   detectBtn.addEventListener('click', () => {
@@ -87,6 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
         lngInput.value = position.coords.longitude.toFixed(6);
         locationStatus.textContent = 'Location detected successfully.';
         detectBtn.disabled = false;
+        updateStepper();
       },
       () => {
         locationStatus.textContent = 'Could not detect location. Please enter manually.';
@@ -124,9 +151,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       const result = await apiPostForm('/reports', formData);
+      // Save report ID to localStorage for "My Reports" feature
+      saveReportId(result.id);
       window.location.href = `status.html?id=${result.id}`;
     } catch (err) {
-      showError('Failed to submit report. Please try again.');
+      const errorMsg = err.message || 'Failed to submit report. Please try again.';
+      showError(errorMsg);
       formLoading.style.display = 'none';
       submitBtn.disabled = false;
     }
@@ -140,4 +170,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function hideError() {
     formError.style.display = 'none';
   }
+
+  // Initial stepper state
+  updateStepper();
 });

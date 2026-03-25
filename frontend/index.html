@@ -1,7 +1,11 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>PotholeSafe</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PotholeSafe - Report Potholes, Make Roads Safer</title>
+  <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
+  <meta name="description" content="PotholeSafe helps citizens report potholes and improve road safety. Upload a photo, pinpoint location, and help fix your city's roads.">
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -12,24 +16,146 @@
     PotholeSafe
   </div>
   <div>
-    <a href="index.html">Home</a>
+    <a href="index.html" class="active">Home</a>
     <a href="report.html">Report</a>
     <a href="map.html">Map</a>
+    <a href="status.html">Status</a>
     <a href="admin.html">Admin</a>
   </div>
 </nav>
 
-<div class="container">
-  <div class="card center">
-    <h1>Report potholes. Make roads safer.</h1>
-    <p class="muted">Help improve your city in under 30 seconds.</p>
-    <br>
-    <a href="report.html">
-      <button class="btn">Report a Pothole</button>
-    </a>
+<!-- Hero Section -->
+<section class="hero">
+  <div class="hero-content">
+    <h1>Report Potholes.<br>Make Roads Safer.</h1>
+    <p>Help improve your city's infrastructure in under 30 seconds. Snap a photo, share the location, and let authorities know.</p>
+    <div class="hero-buttons">
+      <a href="report.html" class="btn btn-lg">Report a Pothole</a>
+      <a href="map.html" class="btn btn-lg secondary">View Map</a>
+    </div>
   </div>
-</div>
+</section>
+
+<!-- Stats Section -->
+<section class="stats-section">
+  <div class="container">
+    <div class="stats-grid home-stats">
+      <div class="stat-card">
+        <p class="stat-number" data-target="0" id="stat-total">0</p>
+        <p class="stat-label">Total Reports</p>
+      </div>
+      <div class="stat-card stat-verified">
+        <p class="stat-number" data-target="0" id="stat-verified">0</p>
+        <p class="stat-label">Verified</p>
+      </div>
+      <div class="stat-card stat-pending">
+        <p class="stat-number" data-target="0" id="stat-pending">0</p>
+        <p class="stat-label">Pending Review</p>
+      </div>
+      <div class="stat-card">
+        <p class="stat-number" id="stat-cities">1</p>
+        <p class="stat-label">City Covered</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- How It Works -->
+<section class="how-it-works">
+  <div class="container">
+    <h2 class="section-title">How It Works</h2>
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-icon">1</div>
+        <h3>Snap a Photo</h3>
+        <p>Take a clear photo of the pothole using your phone or upload an existing image.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-icon">2</div>
+        <h3>Share Location</h3>
+        <p>Enable GPS or manually enter coordinates so authorities can find it easily.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-icon">3</div>
+        <h3>AI Verification</h3>
+        <p>Our system verifies the image and adds it to the public map for action.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Features Section -->
+<section class="features-section">
+  <div class="container">
+    <h2 class="section-title">Why PotholeSafe?</h2>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">&#9889;</div>
+        <h3>Fast & Easy</h3>
+        <p>Submit a report in under 30 seconds from any device.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">&#128506;</div>
+        <h3>Interactive Map</h3>
+        <p>View all reported potholes on an interactive city map.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">&#128274;</div>
+        <h3>Verified Reports</h3>
+        <p>AI-powered verification ensures accurate data.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">&#128100;</div>
+        <h3>Anonymous</h3>
+        <p>No login required. Report anonymously and help your community.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Track Report Section -->
+<section class="track-section">
+  <div class="container">
+    <div class="track-card">
+      <h2>Track Your Report</h2>
+      <p class="muted">Already submitted a report? Enter your report ID to check its status.</p>
+      <div class="track-form">
+        <input type="number" id="track-report-id" placeholder="Enter Report ID" min="1">
+        <button class="btn" onclick="trackReport()">Track Status</button>
+      </div>
+      <div id="my-reports-section" class="my-reports" style="display:none;">
+        <h4>Your Recent Reports</h4>
+        <ul id="my-reports-list"></ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section">
+  <div class="container">
+    <div class="cta-card">
+      <h2>Ready to improve your city?</h2>
+      <p>Join citizens making a difference. Report a pothole today.</p>
+      <a href="report.html" class="btn btn-lg">Get Started</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-content">
+    <div class="footer-links">
+      <a href="index.html">Home</a>
+      <a href="report.html">Report</a>
+      <a href="map.html">Map</a>
+      <a href="status.html">Status</a>
+      <a href="admin.html">Admin</a>
+    </div>
+    <p class="footer-copyright">PotholeSafe - A College Project for Civic Infrastructure</p>
+  </div>
+</footer>
 
 <script src="js/main.js"></script>
+<script src="js/home.js"></script>
 </body>
 </html>

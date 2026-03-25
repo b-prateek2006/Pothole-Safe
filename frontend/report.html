@@ -1,7 +1,10 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Report a Pothole</title>
+  <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -13,8 +16,9 @@
   </div>
   <div>
     <a href="index.html">Home</a>
-    <a href="report.html">Report</a>
+    <a href="report.html" class="active">Report</a>
     <a href="map.html">Map</a>
+    <a href="status.html">Status</a>
     <a href="admin.html">Admin</a>
   </div>
 </nav>
@@ -23,11 +27,29 @@
   <div class="card">
     <h2>Report a Pothole</h2>
 
+    <!-- Stepper -->
+    <div class="stepper">
+      <div class="step active" data-step="1">
+        <div class="step-number">1</div>
+        <div class="step-label">Photo</div>
+      </div>
+      <div class="step-line"></div>
+      <div class="step" data-step="2">
+        <div class="step-number">2</div>
+        <div class="step-label">Location</div>
+      </div>
+      <div class="step-line"></div>
+      <div class="step" data-step="3">
+        <div class="step-number">3</div>
+        <div class="step-label">Submit</div>
+      </div>
+    </div>
+
     <form id="report-form">
       <label for="photo">Upload Photo</label>
       <div id="drop-zone" class="drop-zone">
-        <p>Click or drag an image here</p>
-        <input type="file" id="photo" accept="image/*" hidden>
+        <p>&#128247; Click or drag an image here</p>
+        <input type="file" id="photo" accept="image/*" capture="environment" hidden>
       </div>
       <div id="preview-container" class="preview-container" style="display:none;">
         <img id="image-preview" alt="Preview">
@@ -41,18 +63,18 @@
           <input type="number" id="latitude" placeholder="Latitude" step="any" required>
           <input type="number" id="longitude" placeholder="Longitude" step="any" required>
         </div>
-        <button type="button" id="detect-location" class="btn secondary">Detect My Location</button>
+        <button type="button" id="detect-location" class="btn secondary">&#128205; Detect Location</button>
       </div>
       <p id="location-status" class="muted"></p>
 
       <br>
       <label for="description">Description (optional)</label>
-      <textarea id="description" placeholder="Describe the pothole..." rows="3"></textarea>
+      <textarea id="description" placeholder="Describe the pothole (size, depth, hazard level)..." rows="3"></textarea>
 
       <br><br>
       <div class="form-actions">
         <button type="submit" class="btn" id="submit-btn">Submit Report</button>
-        <a href="index.html"><button type="button" class="btn secondary">Cancel</button></a>
+        <a href="index.html" class="btn secondary">Cancel</a>
       </div>
 
       <div id="form-error" class="error-message" style="display:none;"></div>
@@ -63,6 +85,19 @@
     </form>
   </div>
 </div>
+
+<footer>
+  <div class="footer-content">
+    <div class="footer-links">
+      <a href="index.html">Home</a>
+      <a href="report.html">Report</a>
+      <a href="map.html">Map</a>
+      <a href="status.html">Status</a>
+      <a href="admin.html">Admin</a>
+    </div>
+    <p class="footer-copyright">PotholeSafe - A College Project for Civic Infrastructure</p>
+  </div>
+</footer>
 
 <script src="js/main.js"></script>
 <script src="js/report.js"></script>
