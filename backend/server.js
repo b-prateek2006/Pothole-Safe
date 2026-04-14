@@ -18,11 +18,13 @@ const {
   getSessionSecret,
   isMetricsEnabled,
   isMetricsAuthorized,
+  isFrontendTelemetryEnabled,
 } = require('./config/runtime');
 
 const reportRoutes = require('./routes/reportRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const fileRoutes = require('./routes/fileRoutes');
+const telemetryRoutes = require('./routes/telemetryRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -157,7 +159,19 @@ const reportLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+const telemetryLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  message: { error: 'Too many telemetry events. Please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // Routes
+if (isFrontendTelemetryEnabled(process.env)) {
+  app.use('/api/telemetry', telemetryLimiter, telemetryRoutes);
+}
+
 app.use('/api/reports', reportLimiter, reportRoutes);
 app.use('/api/admin/login', loginLimiter);
 app.use('/api/admin', adminRoutes);

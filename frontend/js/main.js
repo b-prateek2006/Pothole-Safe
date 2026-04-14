@@ -10,6 +10,110 @@ function resolveApiBase() {
 }
 
 const API_BASE = resolveApiBase();
+const TELEMETRY_ENDPOINT = `${API_BASE}/telemetry/frontend`;
+
+const telemetryThrottleMap = new Map();
+
+function shouldThrottleTelemetry(key, windowMs = 30000) {
+  const now = Date.now();
+  const previous = telemetryThrottleMap.get(key) || 0;
+  if (now - previous < windowMs) {
+    return true;
+  }
+
+  telemetryThrottleMap.set(key, now);
+  return false;
+}
+
+function sanitizeTelemetryMetadata(metadata) {
+  if (!metadata || typeof metadata !== 'object') {
+    return null;
+  }
+
+  try {
+    const serialized = JSON.stringify(metadata);
+    if (!serialized || serialized.length > 4000) {
+      return null;
+    }
+    return JSON.parse(serialized);
+  } catch {
+    return null;
+  }
+}
+
+function sendTelemetryEvent(payload) {
+  const eventBody = {
+    eventType: payload.eventType,
+    severity: payload.severity || 'error',
+    message: payload.message || null,
+    pageUrl: window.location.href,
+    clientTimestamp: new Date().toISOString(),
+    metadata: sanitizeTelemetryMetadata(payload.metadata),
+  };
+
+  const serialized = JSON.stringify(eventBody);
+
+  try {
+    if (navigator.sendBeacon) {
+      const blob = new Blob([serialized], { type: 'application/json' });
+      navigator.sendBeacon(TELEMETRY_ENDPOINT, blob);
+      return;
+    }
+  } catch {
+    // Fall through to fetch.
+  }
+
+  fetch(TELEMETRY_ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: serialized,
+    keepalive: true,
+    credentials: 'omit',
+  }).catch(() => {
+    // Avoid recursive telemetry errors.
+  });
+}
+
+function trackTelemetry(eventType, metadata = {}, severity = 'error') {
+  if (!eventType) {
+    return;
+  }
+
+  const key = `${eventType}:${metadata.message || metadata.status || ''}`;
+  if (shouldThrottleTelemetry(key)) {
+    return;
+  }
+
+  sendTelemetryEvent({
+    eventType,
+    severity,
+    message: metadata.message || null,
+    metadata,
+  });
+}
+
+window.trackTelemetry = trackTelemetry;
+
+window.addEventListener('error', (event) => {
+  trackTelemetry('frontend_error', {
+    message: event.message || 'Unhandled frontend error',
+    source: event.filename || null,
+    line: event.lineno || null,
+    column: event.colno || null,
+    stack: event.error && event.error.stack ? event.error.stack : null,
+  }, 'error');
+});
+
+window.addEventListener('unhandledrejection', (event) => {
+  const reason = event.reason;
+  const message = reason && reason.message ? reason.message : String(reason || 'Unhandled promise rejection');
+  const stack = reason && reason.stack ? reason.stack : null;
+
+  trackTelemetry('frontend_unhandled_rejection', {
+    message,
+    stack,
+  }, 'error');
+});
 
 // --- My Reports: localStorage helpers ---
 const MY_REPORTS_KEY = 'potholesafe_my_reports';
@@ -108,52 +212,70 @@ async function parseErrorResponse(res) {
   }
 }
 
-async function apiGet(endpoint) {
-  const res = await fetch(`${API_BASE}${endpoint}`, {
-    credentials: 'include',
-  });
+async function requestApi(endpoint, options = {}) {
+  const method = options.method || 'GET';
+  const url = `${API_BASE}${endpoint}`;
+
+  let res;
+  try {
+    res = await fetch(url, {
+      credentials: 'include',
+      ...options,
+    });
+  } catch (err) {
+    trackTelemetry('api_network_error', {
+      message: err.message || 'Network request failed',
+      endpoint,
+      method,
+    }, 'error');
+    throw err;
+  }
+
   if (!res.ok) {
     const msg = await parseErrorResponse(res);
-    throw new Error(msg);
+
+    if (res.status >= 500 || res.status === 429) {
+      trackTelemetry('api_http_error', {
+        message: msg,
+        endpoint,
+        method,
+        status: res.status,
+      }, res.status >= 500 ? 'error' : 'warning');
+    }
+
+    const error = new Error(msg);
+    error.status = res.status;
+    throw error;
   }
+
+  return res;
+}
+
+async function apiGet(endpoint) {
+  const res = await requestApi(endpoint, { method: 'GET' });
   return res.json();
 }
 
 async function apiPost(endpoint, body) {
-  const res = await fetch(`${API_BASE}${endpoint}`, {
+  const res = await requestApi(endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
     body: JSON.stringify(body),
   });
-  if (!res.ok) {
-    const msg = await parseErrorResponse(res);
-    throw new Error(msg);
-  }
   return res.json();
 }
 
 async function apiPostForm(endpoint, formData) {
-  const res = await fetch(`${API_BASE}${endpoint}`, {
+  const res = await requestApi(endpoint, {
     method: 'POST',
-    credentials: 'include',
     body: formData,
   });
-  if (!res.ok) {
-    const msg = await parseErrorResponse(res);
-    throw new Error(msg);
-  }
   return res.json();
 }
 
 async function apiPut(endpoint) {
-  const res = await fetch(`${API_BASE}${endpoint}`, {
+  const res = await requestApi(endpoint, {
     method: 'PUT',
-    credentials: 'include',
   });
-  if (!res.ok) {
-    const msg = await parseErrorResponse(res);
-    throw new Error(msg);
-  }
   return res.json();
 }

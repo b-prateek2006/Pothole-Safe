@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', async () => {
+  const track = window.trackTelemetry || (() => {});
   const params = new URLSearchParams(window.location.search);
   const reportId = params.get('id');
 
@@ -7,8 +8,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   const error = document.getElementById('status-error');
 
   let refreshInterval = null;
+  let hasLoggedStatusLoad = false;
+  let hasLoggedStatusError = false;
 
   if (!reportId) {
+    track('status_lookup_failed', {
+      message: 'Missing report id in status page URL',
+    }, 'warning');
     loading.style.display = 'none';
     error.style.display = 'block';
     return;
@@ -17,6 +23,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   async function loadReport() {
     try {
       const report = await apiGet(`/reports/${reportId}`);
+
+      if (!hasLoggedStatusLoad) {
+        track('status_lookup_success', {
+          message: 'Status lookup succeeded',
+          reportId,
+          status: report.verificationStatus,
+        }, 'info');
+        hasLoggedStatusLoad = true;
+      }
+
       loading.style.display = 'none';
       content.style.display = 'block';
 
@@ -81,6 +97,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.getElementById('detail-date').textContent =
         report.createdAt ? new Date(report.createdAt).toLocaleString() : 'N/A';
     } catch (err) {
+      if (!hasLoggedStatusError) {
+        track('status_lookup_failed', {
+          message: err.message || 'Status lookup failed',
+          reportId,
+        }, 'warning');
+        hasLoggedStatusError = true;
+      }
       loading.style.display = 'none';
       error.style.display = 'block';
       stopAutoRefresh();

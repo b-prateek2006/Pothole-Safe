@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
+  const track = window.trackTelemetry || (() => {});
   const form = document.getElementById('report-form');
   const photoInput = document.getElementById('photo');
   const dropZone = document.getElementById('drop-zone');
@@ -117,6 +118,9 @@ document.addEventListener('DOMContentLoaded', () => {
       },
       () => {
         locationStatus.textContent = 'Could not detect location. Please enter manually.';
+        track('report_geolocation_failed', {
+          message: 'Browser geolocation failed',
+        }, 'warning');
         detectBtn.disabled = false;
       },
       { enableHighAccuracy: true, timeout: 10000 }
@@ -153,9 +157,16 @@ document.addEventListener('DOMContentLoaded', () => {
       const result = await apiPostForm('/reports', formData);
       // Save report ID to localStorage for "My Reports" feature
       saveReportId(result.id);
+      track('report_submit_success', {
+        message: 'Report submitted successfully',
+        reportId: result.id,
+      }, 'info');
       window.location.href = `status.html?id=${result.id}`;
     } catch (err) {
       const errorMsg = err.message || 'Failed to submit report. Please try again.';
+      track('report_submit_failed', {
+        message: errorMsg,
+      }, 'warning');
       showError(errorMsg);
       formLoading.style.display = 'none';
       submitBtn.disabled = false;

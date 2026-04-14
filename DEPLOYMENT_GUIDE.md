@@ -61,6 +61,7 @@ INIT_ADMIN_PASSWORD=<temporary_strong_admin_password>
 
 ENABLE_METRICS=false
 METRICS_TOKEN=<optional_bearer_token>
+ENABLE_FRONTEND_TELEMETRY=true
 
 ALLOW_DESTRUCTIVE_MIGRATION_ROLLBACK=false
 ALLOW_DB_RESTORE=false
@@ -144,6 +145,7 @@ If frontend and backend are served from the same origin, leave it empty and it w
 6. Confirm readiness endpoint responds with `status: ready`.
 7. Perform one verify/reject action and confirm `/api/admin/audit-logs` records the event.
 8. Soft-delete one report, confirm it disappears from default listing, then restore it via `/api/admin/reports/:id/restore`.
+9. Trigger a frontend error in browser devtools and confirm `POST /api/telemetry/frontend` returns 202.
 
 ## 7. Security Follow-Up (Recommended)
 

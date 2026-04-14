@@ -2,6 +2,7 @@ const sequelize = require('../config/database');
 const PotholeReport = require('./PotholeReport');
 const AdminUser = require('./AdminUser');
 const AdminAuditLog = require('./AdminAuditLog');
+const FrontendTelemetryEvent = require('./FrontendTelemetryEvent');
 
 AdminAuditLog.belongsTo(AdminUser, {
 	foreignKey: 'adminUserId',
@@ -19,4 +20,5 @@ module.exports = {
 	PotholeReport,
 	AdminUser,
 	AdminAuditLog,
+	FrontendTelemetryEvent,
 };

@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
+  const track = window.trackTelemetry || (() => {});
   const loginSection = document.getElementById('login-section');
   const dashboardSection = document.getElementById('dashboard-section');
   const loginForm = document.getElementById('login-form');
@@ -28,8 +29,14 @@ document.addEventListener('DOMContentLoaded', () => {
       await apiPost('/admin/login', { username, password });
       sessionStorage.setItem('adminLoggedIn', 'true');
       loginError.style.display = 'none';
+      track('admin_login_success', {
+        message: 'Admin login successful',
+      }, 'info');
       showDashboard();
     } catch (err) {
+      track('admin_login_failed', {
+        message: err.message || 'Admin login failed',
+      }, 'warning');
       loginError.textContent = err.message || 'Invalid username or password.';
       loginError.style.display = 'block';
     }
@@ -234,6 +241,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       await apiPut(`/admin/reports/${id}/${action}`);
+      track('admin_report_status_update_success', {
+        message: `Report ${actionText} succeeded`,
+        reportId: id,
+        action: actionText,
+      }, 'info');
       showToast(`Report ${actionText === 'verify' ? 'verified' : 'rejected'} successfully!`, 'success');
       await loadStats();
       await loadReports();
@@ -242,6 +254,11 @@ document.addEventListener('DOMContentLoaded', () => {
         handleSessionExpired();
         return;
       }
+      track('admin_report_status_update_failed', {
+        message: err.message || 'Failed to update report status',
+        reportId: id,
+        action: actionText,
+      }, 'warning');
       showToast(err.message || 'Failed to update report status.');
     }
   };
@@ -259,6 +276,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = await response.json();
         throw new Error(data.error || 'Failed to delete report');
       }
+      track('admin_report_delete_success', {
+        message: 'Report soft-deleted',
+        reportId: id,
+      }, 'info');
       showToast('Report soft-deleted successfully!', 'success');
       await loadStats();
       await loadReports();
@@ -267,6 +288,10 @@ document.addEventListener('DOMContentLoaded', () => {
         handleSessionExpired();
         return;
       }
+      track('admin_report_delete_failed', {
+        message: err.message || 'Failed to delete report',
+        reportId: id,
+      }, 'warning');
       showToast(err.message || 'Failed to delete report.');
     }
   };
@@ -293,8 +318,14 @@ document.addEventListener('DOMContentLoaded', () => {
       a.click();
       window.URL.revokeObjectURL(url);
       a.remove();
+      track('admin_export_success', {
+        message: 'CSV export succeeded',
+      }, 'info');
       showToast('CSV exported successfully!', 'success');
     } catch (err) {
+      track('admin_export_failed', {
+        message: err.message || 'CSV export failed',
+      }, 'warning');
       showToast(err.message || 'Failed to export CSV');
     }
   };

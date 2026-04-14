@@ -71,3 +71,20 @@ CREATE TABLE IF NOT EXISTS admin_audit_logs (
         REFERENCES admin_users(id)
         ON DELETE SET NULL
 );
+
+-- Frontend telemetry events
+CREATE TABLE IF NOT EXISTS frontend_telemetry_events (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    event_type VARCHAR(100) NOT NULL,
+    severity ENUM('info', 'warning', 'error') NOT NULL DEFAULT 'error',
+    message TEXT NULL,
+    page_url VARCHAR(500) NULL,
+    request_id VARCHAR(64) NULL,
+    user_agent VARCHAR(255) NULL,
+    client_timestamp DATETIME NULL,
+    metadata JSON NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_frontend_telemetry_event_type (event_type),
+    INDEX idx_frontend_telemetry_severity (severity),
+    INDEX idx_frontend_telemetry_created_at (created_at)
+);

@@ -67,6 +67,15 @@ function isMetricsEnabled(env = process.env) {
   return value === 'true' || value === '1';
 }
 
+function isFrontendTelemetryEnabled(env = process.env) {
+  const value = String(env.ENABLE_FRONTEND_TELEMETRY || '').trim().toLowerCase();
+  if (!value) {
+    return true;
+  }
+
+  return value === 'true' || value === '1';
+}
+
 function isMetricsAuthorized(req, env = process.env) {
   const expectedToken = env.METRICS_TOKEN && env.METRICS_TOKEN.trim();
   if (!expectedToken) {
@@ -91,4 +100,5 @@ module.exports = {
   getSessionSecret,
   isMetricsEnabled,
   isMetricsAuthorized,
+  isFrontendTelemetryEnabled,
 };

@@ -8,6 +8,7 @@ const {
   getSessionSecret,
   isMetricsEnabled,
   isMetricsAuthorized,
+  isFrontendTelemetryEnabled,
   DEFAULT_ALLOWED_ORIGINS,
 } = require('../config/runtime');
 
@@ -108,4 +109,12 @@ test('isMetricsAuthorized validates bearer token and query token', () => {
     query: {},
   };
   assert.equal(isMetricsAuthorized(invalidReq, env), false);
+});
+
+test('isFrontendTelemetryEnabled defaults to true and supports explicit false', () => {
+  assert.equal(isFrontendTelemetryEnabled({}), true);
+  assert.equal(isFrontendTelemetryEnabled({ ENABLE_FRONTEND_TELEMETRY: 'true' }), true);
+  assert.equal(isFrontendTelemetryEnabled({ ENABLE_FRONTEND_TELEMETRY: '1' }), true);
+  assert.equal(isFrontendTelemetryEnabled({ ENABLE_FRONTEND_TELEMETRY: 'false' }), false);
+  assert.equal(isFrontendTelemetryEnabled({ ENABLE_FRONTEND_TELEMETRY: '0' }), false);
 });
