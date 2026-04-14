@@ -8,6 +8,12 @@ AdminAuditLog.belongsTo(AdminUser, {
 	targetKey: 'id',
 });
 
+PotholeReport.belongsTo(AdminUser, {
+	foreignKey: 'deletedByAdminId',
+	targetKey: 'id',
+	as: 'deletedByAdmin',
+});
+
 module.exports = {
 	sequelize,
 	PotholeReport,

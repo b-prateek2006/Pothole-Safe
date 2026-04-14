@@ -13,6 +13,9 @@ CREATE TABLE IF NOT EXISTS pothole_reports (
     description TEXT,
     confidence_score DOUBLE DEFAULT 0,
     verification_status ENUM('PENDING', 'VERIFIED', 'REJECTED') DEFAULT 'PENDING',
+    deleted_by_admin_id BIGINT NULL,
+    delete_reason VARCHAR(255) NULL,
+    deleted_at DATETIME NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -20,6 +23,7 @@ CREATE TABLE IF NOT EXISTS pothole_reports (
 -- Indexes for query performance
 CREATE INDEX idx_status ON pothole_reports(verification_status);
 CREATE INDEX idx_created ON pothole_reports(created_at DESC);
+CREATE INDEX idx_deleted_at ON pothole_reports(deleted_at);
 
 -- Admin users table
 CREATE TABLE IF NOT EXISTS admin_users (
@@ -29,6 +33,12 @@ CREATE TABLE IF NOT EXISTS admin_users (
     role VARCHAR(50) DEFAULT 'admin',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+ALTER TABLE pothole_reports
+    ADD CONSTRAINT fk_pothole_deleted_by_admin
+    FOREIGN KEY (deleted_by_admin_id)
+    REFERENCES admin_users(id)
+    ON DELETE SET NULL;
 
 -- Session store table (connect-session-sequelize)
 CREATE TABLE IF NOT EXISTS sessions (

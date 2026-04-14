@@ -16,6 +16,7 @@ router.get('/audit-logs', requireAdmin, adminController.getAuditLogs);
 router.put('/reports/:id/verify', requireAdmin, adminController.verifyReport);
 router.put('/reports/:id/reject', requireAdmin, adminController.rejectReport);
 router.delete('/reports/:id', requireAdmin, adminController.deleteReport);
+router.put('/reports/:id/restore', requireAdmin, adminController.restoreReport);
 router.get('/stats', requireAdmin, adminController.getStats);
 
 module.exports = router;

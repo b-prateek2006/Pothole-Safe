@@ -248,7 +248,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Delete report
   window.deleteReport = async function (id) {
-    if (!confirm('Are you sure you want to delete this report? This cannot be undone.')) return;
+    if (!confirm('Are you sure you want to delete this report? It will be soft-deleted and can be restored.')) return;
 
     try {
       const response = await fetch(`${API_BASE}/admin/reports/${id}`, {
@@ -259,7 +259,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = await response.json();
         throw new Error(data.error || 'Failed to delete report');
       }
-      showToast('Report deleted successfully!', 'success');
+      showToast('Report soft-deleted successfully!', 'success');
       await loadStats();
       await loadReports();
     } catch (err) {

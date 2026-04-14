@@ -1,4 +1,4 @@
-const { fn, col } = require('sequelize');
+const { Op, fn, col } = require('sequelize');
 const { PotholeReport } = require('../models');
 const fs = require('fs');
 const path = require('path');
@@ -21,17 +21,20 @@ async function getVerifiedReports() {
   });
 }
 
-async function getReportById(id) {
-  return PotholeReport.findByPk(id);
+async function getReportById(id, { includeDeleted = false } = {}) {
+  return PotholeReport.findByPk(id, {
+    paranoid: !includeDeleted,
+  });
 }
 
-async function getReportsByStatus(status, { page = 1, limit = 10 } = {}) {
+async function getReportsByStatus(status, { page = 1, limit = 10, includeDeleted = false } = {}) {
   const offset = (page - 1) * limit;
   const { count, rows } = await PotholeReport.findAndCountAll({
     where: { verificationStatus: status.toUpperCase() },
     order: [['created_at', 'DESC']],
     limit,
     offset,
+    paranoid: !includeDeleted,
   });
   return {
     reports: rows,
@@ -41,12 +44,13 @@ async function getReportsByStatus(status, { page = 1, limit = 10 } = {}) {
   };
 }
 
-async function getAllReports({ page = 1, limit = 10 } = {}) {
+async function getAllReports({ page = 1, limit = 10, includeDeleted = false } = {}) {
   const offset = (page - 1) * limit;
   const { count, rows } = await PotholeReport.findAndCountAll({
     order: [['created_at', 'DESC']],
     limit,
     offset,
+    paranoid: !includeDeleted,
   });
   return {
     reports: rows,
@@ -64,20 +68,63 @@ async function updateStatus(id, status) {
   return report;
 }
 
-async function deleteReport(id) {
+async function deleteReport(id, { adminId = null, reason = null } = {}) {
   const report = await PotholeReport.findByPk(id);
   if (!report) return null;
 
-  // Delete associated image file
-  if (report.imagePath) {
-    const imagePath = path.join(__dirname, '..', 'uploads', report.imagePath);
-    if (fs.existsSync(imagePath)) {
-      fs.unlinkSync(imagePath);
-    }
-  }
+  report.deletedByAdminId = adminId;
+  report.deleteReason = reason ? String(reason).slice(0, 255) : null;
+  await report.save();
 
+  // Soft delete enabled by paranoid mode.
   await report.destroy();
   return report;
+}
+
+async function restoreReport(id) {
+  const report = await PotholeReport.findByPk(id, { paranoid: false });
+  if (!report || !report.deletedAt) {
+    return null;
+  }
+
+  await report.restore();
+  report.deletedByAdminId = null;
+  report.deleteReason = null;
+  await report.save();
+
+  return report;
+}
+
+async function purgeSoftDeletedReports({ olderThanDays = 90 } = {}) {
+  const safeDays = Number.isFinite(olderThanDays) ? Math.max(1, olderThanDays) : 90;
+  const cutoff = new Date(Date.now() - (safeDays * 24 * 60 * 60 * 1000));
+
+  const reports = await PotholeReport.findAll({
+    where: {
+      deletedAt: {
+        [Op.lt]: cutoff,
+      },
+    },
+    paranoid: false,
+  });
+
+  let purged = 0;
+  for (const report of reports) {
+    if (report.imagePath) {
+      const imagePath = path.join(__dirname, '..', 'uploads', report.imagePath);
+      if (fs.existsSync(imagePath)) {
+        fs.unlinkSync(imagePath);
+      }
+    }
+
+    await report.destroy({ force: true });
+    purged += 1;
+  }
+
+  return {
+    purged,
+    cutoff: cutoff.toISOString(),
+  };
 }
 
 async function getStats() {
@@ -111,5 +158,7 @@ module.exports = {
   getAllReports,
   updateStatus,
   deleteReport,
+  restoreReport,
+  purgeSoftDeletedReports,
   getStats,
 };

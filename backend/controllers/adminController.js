@@ -87,9 +87,10 @@ async function getAllReports(req, res, next) {
   try {
     const page = parseInt(req.query.page, 10) || 1;
     let limit = parseInt(req.query.limit, 10) || 10;
+    const includeDeleted = String(req.query.includeDeleted || '').toLowerCase() === 'true';
     // Cap limit to prevent memory exhaustion
     if (limit > 100) limit = 100;
-    const result = await potholeService.getAllReports({ page, limit });
+    const result = await potholeService.getAllReports({ page, limit, includeDeleted });
     res.json(result);
   } catch (err) {
     next(err);
@@ -165,7 +166,15 @@ async function rejectReport(req, res, next) {
 // DELETE /api/admin/reports/:id
 async function deleteReport(req, res, next) {
   try {
-    const report = await potholeService.deleteReport(req.params.id);
+    const deleteReason = req.body?.reason
+      ? String(req.body.reason).trim().slice(0, 255)
+      : null;
+
+    const report = await potholeService.deleteReport(req.params.id, {
+      adminId: req.session?.adminId || null,
+      reason: deleteReason,
+    });
+
     if (!report) {
       await adminAuditService.recordAuditEvent({
         req,
@@ -186,10 +195,46 @@ async function deleteReport(req, res, next) {
       targetType: 'report',
       targetId: String(report.id),
       success: true,
-      metadata: { imagePath: report.imagePath || null },
+      metadata: {
+        imagePath: report.imagePath || null,
+        deleteReason,
+        deletionType: 'soft',
+      },
     });
 
-    res.json({ message: 'Report deleted successfully' });
+    res.json({ message: 'Report soft-deleted successfully' });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// PUT /api/admin/reports/:id/restore
+async function restoreReport(req, res, next) {
+  try {
+    const report = await potholeService.restoreReport(req.params.id);
+    if (!report) {
+      await adminAuditService.recordAuditEvent({
+        req,
+        adminUserId: req.session?.adminId || null,
+        action: 'REPORT_RESTORE_FAILED',
+        targetType: 'report',
+        targetId: req.params.id,
+        success: false,
+        metadata: { reason: 'not_found_or_not_deleted' },
+      });
+      return res.status(404).json({ error: 'Deleted report not found' });
+    }
+
+    await adminAuditService.recordAuditEvent({
+      req,
+      adminUserId: req.session?.adminId || null,
+      action: 'REPORT_RESTORED',
+      targetType: 'report',
+      targetId: String(report.id),
+      success: true,
+    });
+
+    res.json(report);
   } catch (err) {
     next(err);
   }
@@ -275,6 +320,7 @@ module.exports = {
   verifyReport,
   rejectReport,
   deleteReport,
+  restoreReport,
   getStats,
   exportReports,
   getAuditLogs,

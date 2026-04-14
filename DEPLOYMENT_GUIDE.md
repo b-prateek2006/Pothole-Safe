@@ -135,6 +135,7 @@ If frontend and backend are served from the same origin, leave it empty and it w
 5. Verify image URLs load from `/api/files/<filename>`.
 6. Confirm readiness endpoint responds with `status: ready`.
 7. Perform one verify/reject action and confirm `/api/admin/audit-logs` records the event.
+8. Soft-delete one report, confirm it disappears from default listing, then restore it via `/api/admin/reports/:id/restore`.
 
 ## 7. Security Follow-Up (Recommended)
 
@@ -164,3 +165,12 @@ Restore safety policy:
 1. Use restore only in staging unless production restore is required for incident recovery.
 2. Always take a fresh backup before restoring.
 3. Set `ALLOW_DB_RESTORE=false` again immediately after restore.
+
+Retention purge (recommended scheduled task):
+
+```bash
+cd backend
+npm run reports:purge -- 90
+```
+
+This permanently removes soft-deleted reports and their image files older than the specified number of days.

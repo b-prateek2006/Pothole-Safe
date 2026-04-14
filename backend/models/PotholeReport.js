@@ -34,10 +34,22 @@ const PotholeReport = sequelize.define('PotholeReport', {
     defaultValue: 'PENDING',
     field: 'verification_status',
   },
+  deletedByAdminId: {
+    type: DataTypes.BIGINT,
+    allowNull: true,
+    field: 'deleted_by_admin_id',
+  },
+  deleteReason: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
+    field: 'delete_reason',
+  },
 }, {
   tableName: 'pothole_reports',
   timestamps: true,
   underscored: true,
+  paranoid: true,
+  deletedAt: 'deleted_at',
 });
 
 module.exports = PotholeReport;

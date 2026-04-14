@@ -13,6 +13,7 @@
     "migrate:undo": "node scripts/migrateUndo.js",
     "db:backup": "node scripts/backupDatabase.js",
     "db:restore": "node scripts/restoreDatabase.js",
+    "reports:purge": "node scripts/purgeDeletedReports.js",
     "lint": "eslint . --ext .js --max-warnings=0",
     "test": "node --test tests/**/*.test.js",
     "test:ci": "node --test tests/**/*.test.js"
