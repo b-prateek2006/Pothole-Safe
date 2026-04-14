@@ -37,3 +37,6 @@ build/
 # Database files (local SQLite if used)
 *.db
 *.sqlite
+
+# Database backups
+database/backups/

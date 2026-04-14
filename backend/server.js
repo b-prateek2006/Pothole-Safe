@@ -181,15 +181,7 @@ async function start() {
 
     await sequelize.authenticate();
     console.log('Database connected successfully.');
-
-    if (!isProduction) {
-      await sequelize.sync();
-      console.log('Models synchronized.');
-    } else {
-      console.log('Skipping sequelize.sync() in production. Run "npm run db:init" once on first deploy.');
-    }
-
-    await sessionStore.sync();
+    console.log('Automatic schema sync is disabled. Run "npm run db:init" on first deploy and "npm run migrate" for updates.');
 
     server = app.listen(PORT, () => {
       console.log(`PotholeSafe API running on port ${PORT}`);

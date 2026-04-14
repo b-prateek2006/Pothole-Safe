@@ -8,6 +8,11 @@
     "start:prod": "node server.js",
     "dev": "node --watch server.js",
     "db:init": "node scripts/initDatabase.js",
+    "migrate": "sequelize-cli db:migrate",
+    "migrate:status": "sequelize-cli db:migrate:status",
+    "migrate:undo": "node scripts/migrateUndo.js",
+    "db:backup": "node scripts/backupDatabase.js",
+    "db:restore": "node scripts/restoreDatabase.js",
     "lint": "eslint . --ext .js --max-warnings=0",
     "test": "node --test tests/**/*.test.js",
     "test:ci": "node --test tests/**/*.test.js"
@@ -29,6 +34,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",
-    "eslint": "^9.36.0"
+    "eslint": "^9.36.0",
+    "sequelize-cli": "^6.6.3"
   }
 }

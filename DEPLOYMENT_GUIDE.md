@@ -58,6 +58,9 @@ DB_RETRY_MAX=3
 
 INIT_ADMIN_USERNAME=admin
 INIT_ADMIN_PASSWORD=<temporary_strong_admin_password>
+
+ALLOW_DESTRUCTIVE_MIGRATION_ROLLBACK=false
+ALLOW_DB_RESTORE=false
 ```
 
 Notes:
@@ -79,10 +82,22 @@ npm run db:init
 
 What this does:
 1. Connects to DB.
-2. Creates required tables if missing (non-destructive sync).
+2. Applies all pending migrations (idempotent change control).
 3. Creates initial admin user only if it does not already exist.
 
 After initialization, remove `INIT_ADMIN_PASSWORD` from Railway variables.
+
+For future schema updates, run:
+
+```bash
+cd backend
+npm run migrate
+```
+
+Rollback policy:
+1. Rollbacks are blocked by default.
+2. To allow one rollback intentionally, set `ALLOW_DESTRUCTIVE_MIGRATION_ROLLBACK=true` and run `npm run migrate:undo`.
+3. Immediately set it back to `false` after the operation.
 
 ## 4. Configure Backend Health Check
 
@@ -125,3 +140,26 @@ If frontend and backend are served from the same origin, leave it empty and it w
 1. Rotate admin credentials immediately after first login.
 2. Rotate `SESSION_SECRET` if it was exposed in any logs.
 3. Remove localhost origins from `ALLOWED_ORIGINS` when no longer needed.
+
+## 8. Backup and Restore Runbook
+
+Create a backup:
+
+```bash
+cd backend
+npm run db:backup
+```
+
+Restore a backup (blocked by default):
+
+```bash
+cd backend
+npm run db:restore -- ../database/backups/<backup-file>.sql
+```
+
+Before running restore, temporarily set `ALLOW_DB_RESTORE=true` in your environment.
+
+Restore safety policy:
+1. Use restore only in staging unless production restore is required for incident recovery.
+2. Always take a fresh backup before restoring.
+3. Set `ALLOW_DB_RESTORE=false` again immediately after restore.

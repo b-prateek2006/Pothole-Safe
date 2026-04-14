@@ -2,6 +2,7 @@ require('dotenv').config();
 
 const bcrypt = require('bcryptjs');
 const { sequelize, AdminUser } = require('../models');
+const { runSequelizeCli } = require('./sequelizeCli');
 
 async function ensureInitialAdmin() {
   const username = process.env.INIT_ADMIN_USERNAME || 'admin';
@@ -33,8 +34,8 @@ async function init() {
     await sequelize.authenticate();
     console.log('Database connection successful.');
 
-    await sequelize.sync();
-    console.log('Database schema synchronized without destructive changes.');
+    runSequelizeCli(['db:migrate']);
+    console.log('Database migrations completed.');
 
     await ensureInitialAdmin();
 
