@@ -4,6 +4,8 @@ const assert = require('node:assert/strict');
 const {
   parseTrustProxy,
   getAllowedOrigins,
+  getAllowedOriginPatterns,
+  isOriginAllowed,
   validateProductionConfig,
   getSessionSecret,
   isMetricsEnabled,
@@ -30,6 +32,27 @@ test('getAllowedOrigins returns defaults when input is empty', () => {
 test('getAllowedOrigins trims values and removes duplicates', () => {
   const parsed = getAllowedOrigins(' https://a.com, https://b.com,https://a.com ');
   assert.deepEqual(parsed, ['https://a.com', 'https://b.com']);
+});
+
+test('getAllowedOriginPatterns returns empty list when input is empty', () => {
+  assert.deepEqual(getAllowedOriginPatterns(''), []);
+  assert.deepEqual(getAllowedOriginPatterns(undefined), []);
+});
+
+test('getAllowedOriginPatterns supports wildcard matching', () => {
+  const patterns = getAllowedOriginPatterns('https://*.vercel.app,https://*.vercel.app');
+  assert.equal(patterns.length, 1);
+  assert.equal(patterns[0].test('https://frontend-git-main-demo.vercel.app'), true);
+  assert.equal(patterns[0].test('https://example.com'), false);
+});
+
+test('isOriginAllowed supports exact and wildcard origin entries', () => {
+  const exactOrigins = ['https://app.example.com'];
+  const patternOrigins = getAllowedOriginPatterns('https://*.vercel.app');
+
+  assert.equal(isOriginAllowed('https://app.example.com', exactOrigins, patternOrigins), true);
+  assert.equal(isOriginAllowed('https://frontend-git-main-demo.vercel.app', exactOrigins, patternOrigins), true);
+  assert.equal(isOriginAllowed('https://malicious.example.net', exactOrigins, patternOrigins), false);
 });
 
 test('validateProductionConfig skips checks outside production', () => {
@@ -65,6 +88,20 @@ test('validateProductionConfig passes when all required vars are present', () =>
     DB_USER: 'root',
     DB_PASSWORD: 'password',
     ALLOWED_ORIGINS: 'http://localhost:5500',
+    SESSION_SECRET: 'a'.repeat(64),
+  };
+
+  assert.doesNotThrow(() => validateProductionConfig(env));
+});
+
+test('validateProductionConfig passes when origin patterns are configured without ALLOWED_ORIGINS', () => {
+  const env = {
+    NODE_ENV: 'production',
+    DB_HOST: 'localhost',
+    DB_NAME: 'potholesafe',
+    DB_USER: 'root',
+    DB_PASSWORD: 'password',
+    ALLOWED_ORIGIN_PATTERNS: 'https://*.vercel.app',
     SESSION_SECRET: 'a'.repeat(64),
   };
 

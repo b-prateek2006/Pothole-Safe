@@ -14,6 +14,8 @@ const { metricsMiddleware, metricsHandler } = require('./middleware/metrics');
 const {
   parseTrustProxy,
   getAllowedOrigins,
+  getAllowedOriginPatterns,
+  isOriginAllowed,
   validateProductionConfig,
   getSessionSecret,
   isMetricsEnabled,
@@ -104,14 +106,15 @@ app.use(metricsMiddleware);
 
 // CORS with origin whitelist
 const ALLOWED_ORIGINS = getAllowedOrigins(process.env.ALLOWED_ORIGINS);
+const ALLOWED_ORIGIN_PATTERNS = getAllowedOriginPatterns(process.env.ALLOWED_ORIGIN_PATTERNS);
 
 app.use(cors({
   origin: function (origin, callback) {
     if (!origin) return callback(null, true);
-    if (ALLOWED_ORIGINS.includes(origin)) {
+    if (isOriginAllowed(origin, ALLOWED_ORIGINS, ALLOWED_ORIGIN_PATTERNS)) {
       return callback(null, true);
     }
-    return callback(new Error('Not allowed by CORS'));
+    return callback(new Error(`Not allowed by CORS: ${origin}`));
   },
   credentials: true,
 }));

@@ -5,6 +5,8 @@ const DEFAULT_ALLOWED_ORIGINS = [
   'http://127.0.0.1:5501',
 ];
 
+const DEFAULT_ALLOWED_ORIGIN_PATTERNS = [];
+
 function parseTrustProxy(value) {
   if (value === undefined) return false;
   const normalized = String(value).trim().toLowerCase();
@@ -33,13 +35,53 @@ function getAllowedOrigins(value) {
   return Array.from(uniqueOrigins);
 }
 
+function wildcardToRegex(pattern) {
+  const escaped = pattern
+    .replace(/[.+?^${}()|[\]\\]/g, '\\$&')
+    .replace(/\*/g, '.*');
+
+  return new RegExp(`^${escaped}$`, 'i');
+}
+
+function getAllowedOriginPatterns(value) {
+  if (!value || !value.trim()) {
+    return [...DEFAULT_ALLOWED_ORIGIN_PATTERNS];
+  }
+
+  const uniquePatterns = new Set(
+    value
+      .split(',')
+      .map((pattern) => pattern.trim())
+      .filter(Boolean)
+  );
+
+  return Array.from(uniquePatterns).map((pattern) => wildcardToRegex(pattern));
+}
+
+function isOriginAllowed(origin, allowedOrigins, allowedOriginPatterns = []) {
+  if (allowedOrigins.includes(origin)) {
+    return true;
+  }
+
+  return allowedOriginPatterns.some((pattern) => pattern.test(origin));
+}
+
 function validateProductionConfig(env = process.env) {
   if (env.NODE_ENV !== 'production') {
     return;
   }
 
-  const requiredEnvVars = ['DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASSWORD', 'SESSION_SECRET', 'ALLOWED_ORIGINS'];
+  const requiredEnvVars = ['DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASSWORD', 'SESSION_SECRET'];
   const missing = requiredEnvVars.filter((name) => !env[name] || !env[name].trim());
+
+  const hasAllowedOrigins = Boolean(
+    (env.ALLOWED_ORIGINS && env.ALLOWED_ORIGINS.trim()) ||
+    (env.ALLOWED_ORIGIN_PATTERNS && env.ALLOWED_ORIGIN_PATTERNS.trim())
+  );
+
+  if (!hasAllowedOrigins) {
+    missing.push('ALLOWED_ORIGINS or ALLOWED_ORIGIN_PATTERNS');
+  }
 
   if (missing.length > 0) {
     throw new Error(`Missing required environment variables in production: ${missing.join(', ')}`);
@@ -94,8 +136,11 @@ function isMetricsAuthorized(req, env = process.env) {
 
 module.exports = {
   DEFAULT_ALLOWED_ORIGINS,
+  DEFAULT_ALLOWED_ORIGIN_PATTERNS,
   parseTrustProxy,
   getAllowedOrigins,
+  getAllowedOriginPatterns,
+  isOriginAllowed,
   validateProductionConfig,
   getSessionSecret,
   isMetricsEnabled,
