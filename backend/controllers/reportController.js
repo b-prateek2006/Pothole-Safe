@@ -2,7 +2,6 @@ const fs = require('fs');
 const xss = require('xss');
 const potholeService = require('../services/potholeService');
 const { verifyImage } = require('../services/imageVerificationService');
-const { upload } = require('../services/fileStorageService');
 
 function cleanupFile(file) {
   if (file && file.path) {
@@ -47,7 +46,7 @@ async function submitReport(req, res, next) {
     let verification;
     try {
       verification = await verifyImage(req.file.path);
-    } catch (verifyErr) {
+    } catch {
       cleanupFile(req.file);
       return res.status(500).json({ error: 'Image verification failed. Please try again.' });
     }

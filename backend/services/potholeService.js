@@ -1,5 +1,5 @@
-const { Op, fn, col, literal } = require('sequelize');
-const { PotholeReport, sequelize } = require('../models');
+const { fn, col } = require('sequelize');
+const { PotholeReport } = require('../models');
 const fs = require('fs');
 const path = require('path');
 

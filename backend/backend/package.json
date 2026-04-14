@@ -1,0 +1,8 @@
+{
+  "name": "potholesafe-backend-runner",
+  "private": true,
+  "scripts": {
+    "start": "node ../server.js",
+    "start:prod": "node ../server.js"
+  }
+}

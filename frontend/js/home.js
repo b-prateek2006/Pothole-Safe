@@ -3,12 +3,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   let stats = { total: 47, verified: 32, pending: 12, rejected: 3 };
 
   try {
-    const response = await fetch(`${API_BASE}/admin/stats`, {
-      credentials: 'include',
-    });
-    if (response.ok) {
-      stats = await response.json();
-    }
+    stats = await apiGet('/admin/stats');
   } catch {
     // Use mock data if API unavailable
   }

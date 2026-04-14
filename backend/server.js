@@ -9,6 +9,13 @@ const rateLimit = require('express-rate-limit');
 const SequelizeStore = require('connect-session-sequelize')(session.Store);
 const { sequelize } = require('./models');
 const { errorHandler } = require('./middleware/errorHandler');
+const { requestId } = require('./middleware/requestId');
+const {
+  parseTrustProxy,
+  getAllowedOrigins,
+  validateProductionConfig,
+  getSessionSecret,
+} = require('./config/runtime');
 
 const reportRoutes = require('./routes/reportRoutes');
 const adminRoutes = require('./routes/adminRoutes');
@@ -17,17 +24,78 @@ const fileRoutes = require('./routes/fileRoutes');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const isProduction = process.env.NODE_ENV === 'production';
+let server;
+let isShuttingDown = false;
+
+async function sendReadiness(res) {
+  try {
+    await sequelize.authenticate();
+    return res.json({
+      status: 'ready',
+      timestamp: new Date().toISOString(),
+    });
+  } catch {
+    return res.status(503).json({
+      status: 'not_ready',
+      error: 'database_unavailable',
+      timestamp: new Date().toISOString(),
+    });
+  }
+}
+
+async function shutdown(signal, exitCode = 0) {
+  if (isShuttingDown) return;
+  isShuttingDown = true;
+
+  console.log(`${signal} received. Shutting down gracefully...`);
+
+  if (server) {
+    await new Promise((resolve) => {
+      server.close((err) => {
+        if (err) {
+          console.error('Error closing HTTP server:', err.message);
+        }
+        resolve();
+      });
+    });
+  }
+
+  try {
+    await sequelize.close();
+  } catch (err) {
+    console.error('Error closing database connection:', err.message);
+  }
+
+  process.exit(exitCode);
+}
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled promise rejection:', reason);
+  shutdown('UNHANDLED_REJECTION', 1);
+});
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught exception:', error);
+  shutdown('UNCAUGHT_EXCEPTION', 1);
+});
+
+app.set('trust proxy', parseTrustProxy(process.env.TRUST_PROXY));
 
 // Security headers
 app.use(helmet());
 
+// Request correlation ID
+app.use(requestId);
+
 // Request logging
-app.use(morgan(isProduction ? 'combined' : 'dev'));
+morgan.token('request-id', (req) => req.requestId || '-');
+app.use(morgan(isProduction
+  ? ':date[iso] :method :url :status :response-time ms req_id=:request-id'
+  : ':method :url :status :response-time ms req_id=:request-id'));
 
 // CORS with origin whitelist
-const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(',').map(s => s.trim())
-  : ['http://localhost:5500', 'http://127.0.0.1:5500', 'http://localhost:5501', 'http://127.0.0.1:5501'];
+const ALLOWED_ORIGINS = getAllowedOrigins(process.env.ALLOWED_ORIGINS);
 
 app.use(cors({
   origin: function (origin, callback) {
@@ -41,8 +109,9 @@ app.use(cors({
 }));
 
 // Body parsers
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+const requestBodyLimit = process.env.REQUEST_BODY_LIMIT || '1mb';
+app.use(express.json({ limit: requestBodyLimit }));
+app.use(express.urlencoded({ extended: true, limit: requestBodyLimit }));
 
 // Session store (MySQL-backed)
 const sessionStore = new SequelizeStore({
@@ -53,7 +122,7 @@ const sessionStore = new SequelizeStore({
 });
 
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'potholesafe-secret',
+  secret: getSessionSecret(process.env),
   store: sessionStore,
   resave: false,
   saveUninitialized: false,
@@ -88,9 +157,17 @@ app.use('/api/admin/login', loginLimiter);
 app.use('/api/admin', adminRoutes);
 app.use('/api/files', fileRoutes);
 
-// Health check
-app.get('/api/health', (req, res) => {
+// Health checks
+app.get('/api/health/live', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+app.get('/api/health/ready', async (req, res) => {
+  return sendReadiness(res);
+});
+
+app.get('/api/health', async (req, res) => {
+  return sendReadiness(res);
 });
 
 // Error handler
@@ -100,25 +177,22 @@ app.use(errorHandler);
 async function start() {
   try {
     // Validate required config in production
-    if (isProduction) {
-      if (!process.env.SESSION_SECRET || process.env.SESSION_SECRET.length < 32) {
-        throw new Error('SESSION_SECRET must be set and at least 32 characters in production');
-      }
-      if (!process.env.ALLOWED_ORIGINS) {
-        throw new Error('ALLOWED_ORIGINS must be set in production');
-      }
-    }
+    validateProductionConfig(process.env);
 
     await sequelize.authenticate();
     console.log('Database connected successfully.');
 
-    await sequelize.sync();
-    console.log('Models synchronized.');
+    if (!isProduction) {
+      await sequelize.sync();
+      console.log('Models synchronized.');
+    } else {
+      console.log('Skipping sequelize.sync() in production. Run "npm run db:init" once on first deploy.');
+    }
 
-    sessionStore.sync();
+    await sessionStore.sync();
 
-    app.listen(PORT, () => {
-      console.log(`PotholeSafe API running on http://localhost:${PORT}`);
+    server = app.listen(PORT, () => {
+      console.log(`PotholeSafe API running on port ${PORT}`);
     });
   } catch (err) {
     console.error('Failed to start server:', err.message);

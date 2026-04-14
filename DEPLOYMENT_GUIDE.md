@@ -1,115 +1,127 @@
-# 🚀 Deployment Guide for PotholeSafe
+# Deployment Guide (Railway Backend + Vercel Frontend)
 
-## Step 1: Push to GitHub
+## Target Architecture
 
-Run these commands in your project directory:
+```
+Frontend (Vercel static hosting) -> Backend API (Railway) -> MySQL (Railway)
+```
+
+This guide is for a quick production launch with safe defaults and no destructive DB reset.
+
+## 1. Prerequisites
+
+1. Repository pushed to GitHub.
+2. Railway account connected to GitHub.
+3. Vercel account connected to GitHub.
+4. A strong session secret and admin password generated locally.
+
+Generate a session secret:
 
 ```bash
-# Add your GitHub repository as remote
-git remote add origin https://github.com/b-prateek2006/Pothole-Safe.git
-
-# Push to GitHub
-git branch -M main
-git push -u origin main
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
-**Note:** You need to create the repository on GitHub first:
-1. Go to https://github.com/new
-2. Create a new repository named `Pothole-Safe`
-3. Do NOT initialize with README (your code is ready)
-4. Click "Create repository"
-5. Then run the commands above
+## 2. Deploy Backend to Railway
 
----
+1. Create a new Railway project from this repository.
+2. Add a MySQL service in the same Railway project.
+3. In backend service variables, configure:
 
-## Step 2: Deploy to Railway.app
+```env
+PORT=3000
+NODE_ENV=production
 
-### Option A: Deploy Backend to Railway
+DB_HOST=<railway_mysql_host>
+DB_PORT=<railway_mysql_port>
+DB_NAME=<railway_mysql_database>
+DB_USER=<railway_mysql_user>
+DB_PASSWORD=<railway_mysql_password>
+DB_SSL=true
 
-1. Go to https://railway.app
-2. Sign up with GitHub (easier)
-3. Click "New Project" → "Deploy from GitHub"
-4. Select your `Pothole-Safe` repository
-5. Railway will auto-detect it's a Node.js project
-6. Add these environment variables:
-   ```
-   PORT=3000
-   NODE_ENV=production
-   DB_HOST=mysql.railway.internal
-   DB_PORT=3306
-   DB_NAME=potholesafe
-   DB_USER=root
-   DB_PASSWORD=manager
-   UPLOAD_DIR=uploads
-   MAX_FILE_SIZE=10485760
-   VERIFICATION_MODE=mock
-   CONFIDENCE_THRESHOLD=0.6
-   SESSION_SECRET=railway-prod-secret-change-this-64-chars
-   ALLOWED_ORIGINS=https://YOUR_FRONTEND_URL,http://localhost:5500
-   ```
+UPLOAD_DIR=uploads
+MAX_FILE_SIZE=10485760
+REQUEST_BODY_LIMIT=1mb
 
-7. Click "Deploy"
-8. Wait 2-3 minutes, your backend will get a public URL like: `https://potholesafe-prod-xxx.railway.app`
+VERIFICATION_MODE=mock
+CONFIDENCE_THRESHOLD=0.6
 
-### Add MySQL Database to Railway:
+SESSION_SECRET=<64_char_random_secret>
+ALLOWED_ORIGINS=https://your-frontend.vercel.app,http://localhost:5500
+TRUST_PROXY=true
 
-1. In your Railway project, click "New Service"
-2. Select "MySQL"
-3. Railway creates it automatically
-4. Use the connection details in your environment variables above
+DB_LOGGING=false
+DB_POOL_MAX=10
+DB_POOL_MIN=2
+DB_POOL_ACQUIRE=30000
+DB_POOL_IDLE=10000
+DB_RETRY_MAX=3
 
-### Option B: Deploy Frontend to Vercel (Faster CDN)
-
-1. Go to https://vercel.com
-2. Sign up with GitHub
-3. Click "New Project"
-4. Import your GitHub repository
-5. For "Root Directory" select: `./frontend`
-6. Add environment variable:
-   ```
-   VITE_API_BASE=https://YOUR_BACKEND_URL/api
-   ```
-7. Click "Deploy"
-8. Get your frontend URL: `https://pothole-safe-xxx.vercel.app`
-
----
-
-## Step 3: Update CORS
-
-After deployment, update ALLOWED_ORIGINS in Railway backend:
-
-```
-ALLOWED_ORIGINS=https://your-frontend-url.vercel.app,https://your-backend-url.railway.app
+INIT_ADMIN_USERNAME=admin
+INIT_ADMIN_PASSWORD=<temporary_strong_admin_password>
 ```
 
----
+Notes:
+1. Do not hardcode secrets in source files.
+2. `ALLOWED_ORIGINS` should contain frontend origins only.
+3. Keep localhost origin only if you still test from local frontend.
 
-## Architecture After Deployment:
+## 3. Initialize Database (One Time)
+
+After first backend deploy succeeds:
+
+1. Open Railway service shell.
+2. Run:
+
+```bash
+cd backend
+npm run db:init
+```
+
+What this does:
+1. Connects to DB.
+2. Creates required tables if missing (non-destructive sync).
+3. Creates initial admin user only if it does not already exist.
+
+After initialization, remove `INIT_ADMIN_PASSWORD` from Railway variables.
+
+## 4. Configure Backend Health Check
+
+Set Railway health check path to:
 
 ```
-Frontend (Vercel/Railway) → Backend API (Railway, port 3000) → MySQL (Railway)
+/api/health/ready
 ```
 
-All accessible globally with live URLs! 🌍
+Available endpoints:
+1. `/api/health/live` - process liveness.
+2. `/api/health/ready` - readiness (verifies DB connectivity).
+3. `/api/health` - alias for readiness.
 
----
+## 5. Deploy Frontend to Vercel
 
-## Quick Reference:
+1. Create a new Vercel project from the same repository.
+2. Set Root Directory to `frontend`.
+3. No build step is required (vanilla HTML/CSS/JS).
 
-| Component | Platform | URL |
-|-----------|----------|-----|
-| Frontend | Vercel | https://pothole-safe-xxx.vercel.app |
-| Backend API | Railway | https://potholesafe-prod-xxx.railway.app/api |
-| Database | Railway MySQL | (attached to backend) |
-| Admin Login | Frontend App | Same as frontend URL, then /admin.html |
-| Default Credentials | - | admin / admin123 |
+Set API base once in [frontend/js/runtime-config.js](frontend/js/runtime-config.js):
 
----
+```js
+window.POTHOLESAFE_API_BASE = 'https://your-backend.railway.app/api';
+```
 
-## Support:
+If frontend and backend are served from the same origin, leave it empty and it will use `/api` automatically.
 
-- Railway docs: https://docs.railway.app
-- Vercel docs: https://vercel.com/docs
-- If you face issues, check Railway/Vercel dashboards for logs
+## 6. Post-Deploy Verification Checklist
 
-Ready to deploy? Start with Step 1! 🚀
+1. Open frontend URL and submit a report with image upload.
+2. Confirm backend receives `POST /api/reports` successfully.
+3. Log in at `/admin.html` with the initialized admin account.
+4. Confirm admin stats and reports load without CORS/session issues.
+5. Verify image URLs load from `/api/files/<filename>`.
+6. Confirm readiness endpoint responds with `status: ready`.
+
+## 7. Security Follow-Up (Recommended)
+
+1. Rotate admin credentials immediately after first login.
+2. Rotate `SESSION_SECRET` if it was exposed in any logs.
+3. Remove localhost origins from `ALLOWED_ORIGINS` when no longer needed.

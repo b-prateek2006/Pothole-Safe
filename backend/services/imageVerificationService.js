@@ -1,5 +1,4 @@
 const fs = require('fs');
-const path = require('path');
 
 const CONFIDENCE_THRESHOLD = parseFloat(process.env.CONFIDENCE_THRESHOLD) || 0.6;
 
@@ -13,7 +12,7 @@ const POTHOLE_LABELS = [
  * Mock verification — returns a random confidence score.
  * Simulates an image verification API for development.
  */
-async function mockVerify(imagePath) {
+async function mockVerify(_imagePath) {
   // Simulate API delay
   await new Promise((resolve) => setTimeout(resolve, 500));
   const score = 0.6 + Math.random() * 0.35; // 0.60 – 0.95

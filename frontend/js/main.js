@@ -1,5 +1,15 @@
-// Environment-aware API base URL
-const API_BASE = window.POTHOLESAFE_API_BASE || 'http://localhost:3000/api';
+function resolveApiBase() {
+  const configured = (window.POTHOLESAFE_API_BASE || '').trim();
+  if (configured) {
+    return configured.replace(/\/$/, '');
+  }
+
+  const host = window.location.hostname;
+  const isLocal = host === 'localhost' || host === '127.0.0.1';
+  return isLocal ? 'http://localhost:3000/api' : '/api';
+}
+
+const API_BASE = resolveApiBase();
 
 // --- My Reports: localStorage helpers ---
 const MY_REPORTS_KEY = 'potholesafe_my_reports';
