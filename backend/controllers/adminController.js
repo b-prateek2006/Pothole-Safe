@@ -1,22 +1,42 @@
 const bcrypt = require('bcryptjs');
 const { AdminUser } = require('../models');
 const potholeService = require('../services/potholeService');
+const adminAuditService = require('../services/adminAuditService');
 
 // POST /api/admin/login
 async function login(req, res, next) {
   try {
     const { username, password } = req.body;
     if (!username || !password) {
+      await adminAuditService.recordAuditEvent({
+        req,
+        action: 'ADMIN_LOGIN_FAILED',
+        success: false,
+        metadata: { reason: 'missing_credentials', username: username || null },
+      });
       return res.status(400).json({ error: 'Username and password are required' });
     }
 
     const admin = await AdminUser.findOne({ where: { username } });
     if (!admin) {
+      await adminAuditService.recordAuditEvent({
+        req,
+        action: 'ADMIN_LOGIN_FAILED',
+        success: false,
+        metadata: { reason: 'user_not_found', username },
+      });
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     const valid = await bcrypt.compare(password, admin.passwordHash);
     if (!valid) {
+      await adminAuditService.recordAuditEvent({
+        req,
+        adminUserId: admin.id,
+        action: 'ADMIN_LOGIN_FAILED',
+        success: false,
+        metadata: { reason: 'invalid_password', username },
+      });
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
@@ -26,6 +46,17 @@ async function login(req, res, next) {
     req.session.regenerate((err) => {
       if (err) return next(err);
       req.session.adminId = adminId;
+
+      adminAuditService.recordAuditEvent({
+        req,
+        adminUserId: adminId,
+        action: 'ADMIN_LOGIN_SUCCESS',
+        success: true,
+        metadata: { username: adminUsername },
+      }).catch(() => {
+        // Audit failures should not block successful login.
+      });
+
       res.json({ message: 'Login successful', username: adminUsername });
     });
   } catch (err) {
@@ -35,6 +66,15 @@ async function login(req, res, next) {
 
 // POST /api/admin/logout
 async function logout(req, res, next) {
+  const adminId = req.session?.adminId || null;
+
+  await adminAuditService.recordAuditEvent({
+    req,
+    adminUserId: adminId,
+    action: 'ADMIN_LOGOUT',
+    success: true,
+  });
+
   req.session.destroy((err) => {
     if (err) return next(err);
     res.clearCookie('connect.sid');
@@ -61,8 +101,28 @@ async function verifyReport(req, res, next) {
   try {
     const report = await potholeService.updateStatus(req.params.id, 'VERIFIED');
     if (!report) {
+      await adminAuditService.recordAuditEvent({
+        req,
+        adminUserId: req.session?.adminId || null,
+        action: 'REPORT_VERIFY_FAILED',
+        targetType: 'report',
+        targetId: req.params.id,
+        success: false,
+        metadata: { reason: 'not_found' },
+      });
       return res.status(404).json({ error: 'Report not found' });
     }
+
+    await adminAuditService.recordAuditEvent({
+      req,
+      adminUserId: req.session?.adminId || null,
+      action: 'REPORT_VERIFIED',
+      targetType: 'report',
+      targetId: String(report.id),
+      success: true,
+      metadata: { verificationStatus: report.verificationStatus },
+    });
+
     res.json(report);
   } catch (err) {
     next(err);
@@ -74,8 +134,28 @@ async function rejectReport(req, res, next) {
   try {
     const report = await potholeService.updateStatus(req.params.id, 'REJECTED');
     if (!report) {
+      await adminAuditService.recordAuditEvent({
+        req,
+        adminUserId: req.session?.adminId || null,
+        action: 'REPORT_REJECT_FAILED',
+        targetType: 'report',
+        targetId: req.params.id,
+        success: false,
+        metadata: { reason: 'not_found' },
+      });
       return res.status(404).json({ error: 'Report not found' });
     }
+
+    await adminAuditService.recordAuditEvent({
+      req,
+      adminUserId: req.session?.adminId || null,
+      action: 'REPORT_REJECTED',
+      targetType: 'report',
+      targetId: String(report.id),
+      success: true,
+      metadata: { verificationStatus: report.verificationStatus },
+    });
+
     res.json(report);
   } catch (err) {
     next(err);
@@ -87,8 +167,28 @@ async function deleteReport(req, res, next) {
   try {
     const report = await potholeService.deleteReport(req.params.id);
     if (!report) {
+      await adminAuditService.recordAuditEvent({
+        req,
+        adminUserId: req.session?.adminId || null,
+        action: 'REPORT_DELETE_FAILED',
+        targetType: 'report',
+        targetId: req.params.id,
+        success: false,
+        metadata: { reason: 'not_found' },
+      });
       return res.status(404).json({ error: 'Report not found' });
     }
+
+    await adminAuditService.recordAuditEvent({
+      req,
+      adminUserId: req.session?.adminId || null,
+      action: 'REPORT_DELETED',
+      targetType: 'report',
+      targetId: String(report.id),
+      success: true,
+      metadata: { imagePath: report.imagePath || null },
+    });
+
     res.json({ message: 'Report deleted successfully' });
   } catch (err) {
     next(err);
@@ -136,6 +236,15 @@ async function exportReports(req, res, next) {
       csvRows.push(row.join(','));
     });
 
+    await adminAuditService.recordAuditEvent({
+      req,
+      adminUserId: req.session?.adminId || null,
+      action: 'REPORTS_EXPORTED',
+      targetType: 'report',
+      success: true,
+      metadata: { exportedCount: reports.length },
+    });
+
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', 'attachment; filename=pothole-reports.csv');
     res.send(csvRows.join('\n'));
@@ -144,4 +253,29 @@ async function exportReports(req, res, next) {
   }
 }
 
-module.exports = { login, logout, getAllReports, verifyReport, rejectReport, deleteReport, getStats, exportReports };
+// GET /api/admin/audit-logs
+async function getAuditLogs(req, res, next) {
+  try {
+    const page = parseInt(req.query.page, 10) || 1;
+    let limit = parseInt(req.query.limit, 10) || 20;
+    if (limit > 100) limit = 100;
+
+    const action = req.query.action ? String(req.query.action).trim() : null;
+    const result = await adminAuditService.getAuditLogs({ page, limit, action });
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = {
+  login,
+  logout,
+  getAllReports,
+  verifyReport,
+  rejectReport,
+  deleteReport,
+  getStats,
+  exportReports,
+  getAuditLogs,
+};

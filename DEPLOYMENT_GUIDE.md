@@ -134,6 +134,7 @@ If frontend and backend are served from the same origin, leave it empty and it w
 4. Confirm admin stats and reports load without CORS/session issues.
 5. Verify image URLs load from `/api/files/<filename>`.
 6. Confirm readiness endpoint responds with `status: ready`.
+7. Perform one verify/reject action and confirm `/api/admin/audit-logs` records the event.
 
 ## 7. Security Follow-Up (Recommended)
 

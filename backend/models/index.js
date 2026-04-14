@@ -1,5 +1,16 @@
 const sequelize = require('../config/database');
 const PotholeReport = require('./PotholeReport');
 const AdminUser = require('./AdminUser');
+const AdminAuditLog = require('./AdminAuditLog');
 
-module.exports = { sequelize, PotholeReport, AdminUser };
+AdminAuditLog.belongsTo(AdminUser, {
+	foreignKey: 'adminUserId',
+	targetKey: 'id',
+});
+
+module.exports = {
+	sequelize,
+	PotholeReport,
+	AdminUser,
+	AdminAuditLog,
+};

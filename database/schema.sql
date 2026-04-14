@@ -29,3 +29,35 @@ CREATE TABLE IF NOT EXISTS admin_users (
     role VARCHAR(50) DEFAULT 'admin',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Session store table (connect-session-sequelize)
+CREATE TABLE IF NOT EXISTS sessions (
+    sid VARCHAR(36) PRIMARY KEY,
+    expires DATETIME,
+    data MEDIUMTEXT,
+    createdAt DATETIME NOT NULL,
+    updatedAt DATETIME NOT NULL,
+    INDEX idx_sessions_expires (expires)
+);
+
+-- Admin audit logs
+CREATE TABLE IF NOT EXISTS admin_audit_logs (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    admin_user_id BIGINT NULL,
+    action VARCHAR(100) NOT NULL,
+    target_type VARCHAR(100) NULL,
+    target_id VARCHAR(100) NULL,
+    success BOOLEAN NOT NULL DEFAULT TRUE,
+    request_id VARCHAR(64) NULL,
+    ip_address VARCHAR(64) NULL,
+    user_agent VARCHAR(255) NULL,
+    metadata JSON NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_admin_audit_action (action),
+    INDEX idx_admin_audit_created_at (created_at),
+    INDEX idx_admin_audit_admin_user_id (admin_user_id),
+    CONSTRAINT fk_admin_audit_user
+        FOREIGN KEY (admin_user_id)
+        REFERENCES admin_users(id)
+        ON DELETE SET NULL
+);

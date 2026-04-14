@@ -12,6 +12,7 @@ router.post('/logout', requireAdmin, adminController.logout);
 // Protected admin routes
 router.get('/reports', requireAdmin, adminController.getAllReports);
 router.get('/reports/export', requireAdmin, adminController.exportReports);
+router.get('/audit-logs', requireAdmin, adminController.getAuditLogs);
 router.put('/reports/:id/verify', requireAdmin, adminController.verifyReport);
 router.put('/reports/:id/reject', requireAdmin, adminController.rejectReport);
 router.delete('/reports/:id', requireAdmin, adminController.deleteReport);
