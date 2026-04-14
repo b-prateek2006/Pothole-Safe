@@ -10,11 +10,14 @@ const SequelizeStore = require('connect-session-sequelize')(session.Store);
 const { sequelize } = require('./models');
 const { errorHandler } = require('./middleware/errorHandler');
 const { requestId } = require('./middleware/requestId');
+const { metricsMiddleware, metricsHandler } = require('./middleware/metrics');
 const {
   parseTrustProxy,
   getAllowedOrigins,
   validateProductionConfig,
   getSessionSecret,
+  isMetricsEnabled,
+  isMetricsAuthorized,
 } = require('./config/runtime');
 
 const reportRoutes = require('./routes/reportRoutes');
@@ -94,6 +97,9 @@ app.use(morgan(isProduction
   ? ':date[iso] :method :url :status :response-time ms req_id=:request-id'
   : ':method :url :status :response-time ms req_id=:request-id'));
 
+// Request metrics
+app.use(metricsMiddleware);
+
 // CORS with origin whitelist
 const ALLOWED_ORIGINS = getAllowedOrigins(process.env.ALLOWED_ORIGINS);
 
@@ -169,6 +175,16 @@ app.get('/api/health/ready', async (req, res) => {
 app.get('/api/health', async (req, res) => {
   return sendReadiness(res);
 });
+
+if (isMetricsEnabled(process.env)) {
+  app.get('/api/metrics', async (req, res) => {
+    if (!isMetricsAuthorized(req, process.env)) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    return metricsHandler(req, res);
+  });
+}
 
 // Error handler
 app.use(errorHandler);

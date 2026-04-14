@@ -62,10 +62,33 @@ function getSessionSecret(env = process.env) {
   return 'potholesafe-dev-session-secret';
 }
 
+function isMetricsEnabled(env = process.env) {
+  const value = String(env.ENABLE_METRICS || '').trim().toLowerCase();
+  return value === 'true' || value === '1';
+}
+
+function isMetricsAuthorized(req, env = process.env) {
+  const expectedToken = env.METRICS_TOKEN && env.METRICS_TOKEN.trim();
+  if (!expectedToken) {
+    return true;
+  }
+
+  const authorization = req.headers?.authorization;
+  if (typeof authorization === 'string' && authorization.startsWith('Bearer ')) {
+    const bearerToken = authorization.slice('Bearer '.length).trim();
+    return bearerToken === expectedToken;
+  }
+
+  const queryToken = typeof req.query?.token === 'string' ? req.query.token.trim() : '';
+  return queryToken === expectedToken;
+}
+
 module.exports = {
   DEFAULT_ALLOWED_ORIGINS,
   parseTrustProxy,
   getAllowedOrigins,
   validateProductionConfig,
   getSessionSecret,
+  isMetricsEnabled,
+  isMetricsAuthorized,
 };

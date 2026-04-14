@@ -6,6 +6,8 @@ const {
   getAllowedOrigins,
   validateProductionConfig,
   getSessionSecret,
+  isMetricsEnabled,
+  isMetricsAuthorized,
   DEFAULT_ALLOWED_ORIGINS,
 } = require('../config/runtime');
 
@@ -72,4 +74,38 @@ test('getSessionSecret returns secure development fallback only outside producti
   assert.equal(getSessionSecret({ NODE_ENV: 'development' }), 'potholesafe-dev-session-secret');
   assert.throws(() => getSessionSecret({ NODE_ENV: 'production' }), /SESSION_SECRET must be set in production/);
   assert.equal(getSessionSecret({ NODE_ENV: 'production', SESSION_SECRET: 'a'.repeat(64) }), 'a'.repeat(64));
+});
+
+test('isMetricsEnabled handles boolean-like values', () => {
+  assert.equal(isMetricsEnabled({ ENABLE_METRICS: 'true' }), true);
+  assert.equal(isMetricsEnabled({ ENABLE_METRICS: '1' }), true);
+  assert.equal(isMetricsEnabled({ ENABLE_METRICS: 'false' }), false);
+  assert.equal(isMetricsEnabled({ ENABLE_METRICS: undefined }), false);
+});
+
+test('isMetricsAuthorized allows all requests when token is not configured', () => {
+  const req = { headers: {}, query: {} };
+  assert.equal(isMetricsAuthorized(req, {}), true);
+});
+
+test('isMetricsAuthorized validates bearer token and query token', () => {
+  const env = { METRICS_TOKEN: 'secret-token' };
+
+  const bearerReq = {
+    headers: { authorization: 'Bearer secret-token' },
+    query: {},
+  };
+  assert.equal(isMetricsAuthorized(bearerReq, env), true);
+
+  const queryReq = {
+    headers: {},
+    query: { token: 'secret-token' },
+  };
+  assert.equal(isMetricsAuthorized(queryReq, env), true);
+
+  const invalidReq = {
+    headers: { authorization: 'Bearer wrong-token' },
+    query: {},
+  };
+  assert.equal(isMetricsAuthorized(invalidReq, env), false);
 });

@@ -59,6 +59,9 @@ DB_RETRY_MAX=3
 INIT_ADMIN_USERNAME=admin
 INIT_ADMIN_PASSWORD=<temporary_strong_admin_password>
 
+ENABLE_METRICS=false
+METRICS_TOKEN=<optional_bearer_token>
+
 ALLOW_DESTRUCTIVE_MIGRATION_ROLLBACK=false
 ALLOW_DB_RESTORE=false
 ```
@@ -111,6 +114,11 @@ Available endpoints:
 1. `/api/health/live` - process liveness.
 2. `/api/health/ready` - readiness (verifies DB connectivity).
 3. `/api/health` - alias for readiness.
+
+Metrics endpoint (optional):
+1. Enable with `ENABLE_METRICS=true`.
+2. Use `METRICS_TOKEN` for bearer-token protection.
+3. Scrape `/api/metrics` for Prometheus-compatible metrics.
 
 ## 5. Deploy Frontend to Vercel
 
