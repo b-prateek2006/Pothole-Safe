@@ -8,6 +8,8 @@ Frontend (Vercel static hosting) -> Backend API (Railway) -> MySQL (Railway)
 
 This guide is for a quick production launch with safe defaults and no destructive DB reset.
 
+For ongoing release, rollback, and incident handling, use [OPERATIONS_RUNBOOK.md](OPERATIONS_RUNBOOK.md).
+
 ## 1. Prerequisites
 
 1. Repository pushed to GitHub.
