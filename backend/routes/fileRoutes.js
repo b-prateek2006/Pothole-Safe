@@ -8,8 +8,11 @@ router.get('/:filename', (req, res) => {
   const filename = path.basename(req.params.filename); // prevent path traversal
   const filePath = path.join(UPLOAD_DIR, filename);
 
+  // Frontend is hosted on a separate origin, so uploaded images must allow cross-origin embedding.
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+
   res.sendFile(filePath, (err) => {
-    if (err) {
+    if (err && !res.headersSent) {
       res.status(404).json({ error: 'File not found' });
     }
   });
