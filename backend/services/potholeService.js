@@ -44,14 +44,20 @@ async function getReportsByStatus(status, { page = 1, limit = 10, includeDeleted
   };
 }
 
-async function getAllReports({ page = 1, limit = 10, includeDeleted = false } = {}) {
+async function getAllReports({ page = 1, limit = 10, includeDeleted = false, status = null } = {}) {
   const offset = (page - 1) * limit;
-  const { count, rows } = await PotholeReport.findAndCountAll({
+  const query = {
     order: [['created_at', 'DESC']],
     limit,
     offset,
     paranoid: !includeDeleted,
-  });
+  };
+
+  if (status) {
+    query.where = { verificationStatus: status.toUpperCase() };
+  }
+
+  const { count, rows } = await PotholeReport.findAndCountAll(query);
   return {
     reports: rows,
     total: count,

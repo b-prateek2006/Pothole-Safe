@@ -96,8 +96,13 @@ async function getReportsByStatus(req, res, next) {
     if (!['PENDING', 'VERIFIED', 'REJECTED'].includes(status)) {
       return res.status(400).json({ error: 'Invalid status. Use PENDING, VERIFIED, or REJECTED.' });
     }
-    const reports = await potholeService.getReportsByStatus(status);
-    res.json(reports);
+
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    let limit = parseInt(req.query.limit, 10) || 10;
+    if (limit > 1000) limit = 1000;
+
+    const result = await potholeService.getReportsByStatus(status, { page, limit });
+    res.json(result);
   } catch (err) {
     next(err);
   }

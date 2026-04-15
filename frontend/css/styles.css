@@ -205,6 +205,34 @@ label {
   margin-bottom: 6px;
 }
 
+.password-field {
+  position: relative;
+}
+
+.password-field input {
+  padding-right: 72px;
+}
+
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  border: 1px solid var(--input-border);
+  background: var(--card-bg);
+  color: var(--muted);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.password-toggle:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
 /* Stepper */
 .stepper {
   display: flex;

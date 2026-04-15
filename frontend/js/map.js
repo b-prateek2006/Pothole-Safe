@@ -54,11 +54,28 @@ document.addEventListener('DOMContentLoaded', () => {
       // Try to get all reports (for admin) or fall back to verified only
       try {
         const allData = await apiGet('/admin/reports?page=1&limit=1000');
-        allReports = allData.reports || [];
+        allReports = Array.isArray(allData.reports) ? allData.reports : [];
       } catch {
-        // Not logged in as admin, get verified reports only
-        const verified = await apiGet('/reports');
-        allReports = verified;
+        // Public mode: load verified from public endpoint and supplement with status-filtered data.
+        const [verifiedData, pendingData, rejectedData] = await Promise.all([
+          apiGet('/reports'),
+          apiGet('/reports/status/PENDING?page=1&limit=1000'),
+          apiGet('/reports/status/REJECTED?page=1&limit=1000'),
+        ]);
+
+        const extractReports = (payload) => {
+          if (Array.isArray(payload)) return payload;
+          if (payload && Array.isArray(payload.reports)) return payload.reports;
+          return [];
+        };
+
+        const merged = [
+          ...extractReports(verifiedData),
+          ...extractReports(pendingData),
+          ...extractReports(rejectedData),
+        ];
+
+        allReports = Array.from(new Map(merged.map((report) => [report.id, report])).values());
       }
       renderMarkers();
     } catch (err) {

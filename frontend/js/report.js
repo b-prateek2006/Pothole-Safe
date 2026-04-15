@@ -155,13 +155,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       const result = await apiPostForm('/reports', formData);
+      const createdReportId = result.id ?? result.reportId;
+      if (!createdReportId) {
+        throw new Error('Report submitted, but report ID is missing. Please try again.');
+      }
+
       // Save report ID to localStorage for "My Reports" feature
-      saveReportId(result.id);
+      saveReportId(createdReportId);
       track('report_submit_success', {
         message: 'Report submitted successfully',
-        reportId: result.id,
+        reportId: createdReportId,
       }, 'info');
-      window.location.href = `status.html?id=${result.id}`;
+      window.location.href = `status.html?id=${encodeURIComponent(createdReportId)}`;
     } catch (err) {
       const errorMsg = err.message || 'Failed to submit report. Please try again.';
       track('report_submit_failed', {

@@ -85,6 +85,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
 
       // Details
+      document.getElementById('detail-report-id').textContent = report.id || reportId;
+
       const lat = report.latitude != null ? report.latitude.toFixed(4) : 'N/A';
       const lng = report.longitude != null ? report.longitude.toFixed(4) : 'N/A';
       document.getElementById('detail-location').textContent = `${lat}, ${lng}`;

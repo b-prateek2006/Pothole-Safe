@@ -4,6 +4,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const dashboardSection = document.getElementById('dashboard-section');
   const loginForm = document.getElementById('login-form');
   const loginError = document.getElementById('login-error');
+  const passwordInput = document.getElementById('password');
+  const togglePasswordBtn = document.getElementById('toggle-password');
   const statusFilter = document.getElementById('status-filter');
 
   // Pagination state
@@ -17,6 +19,15 @@ document.addEventListener('DOMContentLoaded', () => {
   // Check if already logged in (client-side hint; server validates session)
   if (sessionStorage.getItem('adminLoggedIn') === 'true') {
     showDashboard();
+  }
+
+  if (passwordInput && togglePasswordBtn) {
+    togglePasswordBtn.addEventListener('click', () => {
+      const isCurrentlyVisible = passwordInput.type === 'text';
+      passwordInput.type = isCurrentlyVisible ? 'password' : 'text';
+      togglePasswordBtn.textContent = isCurrentlyVisible ? 'Show' : 'Hide';
+      togglePasswordBtn.setAttribute('aria-label', isCurrentlyVisible ? 'Show password' : 'Hide password');
+    });
   }
 
   // Login
@@ -130,19 +141,19 @@ document.addEventListener('DOMContentLoaded', () => {
     pagination.style.display = 'none';
 
     let reports = [];
-    let total = 0;
 
-    if (filter === 'ALL') {
-      const data = await apiGet(`/admin/reports?page=${currentPage}&limit=${PAGE_SIZE}`);
-      reports = data.reports;
-      total = data.total;
-      totalPages = data.totalPages;
-    } else {
-      // Filter by status uses the old non-paginated endpoint
-      reports = await apiGet(`/reports/status/${filter}`);
-      total = reports.length;
-      totalPages = 1;
+    const query = new URLSearchParams({
+      page: String(currentPage),
+      limit: String(PAGE_SIZE),
+    });
+
+    if (filter !== 'ALL') {
+      query.set('status', filter);
     }
+
+    const data = await apiGet(`/admin/reports?${query.toString()}`);
+    reports = Array.isArray(data.reports) ? data.reports : [];
+    totalPages = Number.isFinite(data.totalPages) && data.totalPages > 0 ? data.totalPages : 1;
 
     loading.style.display = 'none';
 
@@ -187,7 +198,7 @@ document.addEventListener('DOMContentLoaded', () => {
     table.style.display = 'table';
 
     // Update pagination
-    if (filter === 'ALL' && totalPages > 1) {
+    if (totalPages > 1) {
       document.getElementById('page-info').textContent = `Page ${currentPage} of ${totalPages}`;
       document.getElementById('prev-page').disabled = currentPage === 1;
       document.getElementById('next-page').disabled = currentPage === totalPages;

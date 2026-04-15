@@ -88,9 +88,18 @@ async function getAllReports(req, res, next) {
     const page = parseInt(req.query.page, 10) || 1;
     let limit = parseInt(req.query.limit, 10) || 10;
     const includeDeleted = String(req.query.includeDeleted || '').toLowerCase() === 'true';
+    const statusParam = req.query.status ? String(req.query.status).toUpperCase() : 'ALL';
+    const allowedStatuses = ['ALL', 'PENDING', 'VERIFIED', 'REJECTED'];
+
+    if (!allowedStatuses.includes(statusParam)) {
+      return res.status(400).json({ error: 'Invalid status filter. Use ALL, PENDING, VERIFIED, or REJECTED.' });
+    }
+
+    const status = statusParam === 'ALL' ? null : statusParam;
+
     // Cap limit to prevent memory exhaustion
     if (limit > 100) limit = 100;
-    const result = await potholeService.getAllReports({ page, limit, includeDeleted });
+    const result = await potholeService.getAllReports({ page, limit, includeDeleted, status });
     res.json(result);
   } catch (err) {
     next(err);
